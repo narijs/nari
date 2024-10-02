@@ -1,6 +1,6 @@
 {
   "name": "nari",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "bin": "./lib/nari",
   "scripts": {
     "build": "rm -rf ./lib && esbuild src/index.ts --sourcemap --bundle --platform=node --target=node18 --external:./cli --outfile=lib/nari '--banner:js=#!/usr/bin/env node' && chmod +x lib/nari && esbuild src/cli/index.ts --sourcemap --bundle --platform=node --target=node18 --outfile=lib/cli.js",
