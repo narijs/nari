@@ -253,7 +253,7 @@ const resolveRange = function* ({
   if (!resolvedRangeInfo && workspaceVersions) {
     const versions = workspaceVersions.get(name);
     if (versions) {
-      const version = semver.maxSatisfying(Array.from(versions.keys()), range);
+      const version = semver.maxSatisfying(Array.from(versions.keys()), range, true);
       if (version) {
         let resolvedRanges = resolvedPackageRanges.get(name);
         if (!resolvedRanges) {
@@ -298,10 +298,10 @@ const resolveRange = function* ({
       }
     }
 
-    let version = semver.maxSatisfying(versionsBeforeLock, range);
+    let version = semver.maxSatisfying(versionsBeforeLock, range, true);
     if (!version) {
       for (const v of versionsAfterLock) {
-        if (semver.satisfies(v, range)) {
+        if (semver.satisfies(v, range, true)) {
           version = v;
           break;
         }
@@ -1086,7 +1086,7 @@ const optimizeResolutions = ({
         const matchedRanges = new Set<string>();
         versionToRanges.set(version, matchedRanges);
         for (const [checkRange, { version: checkVersion }] of resolveMap) {
-          if (version === checkVersion || semver.satisfies(version, checkRange)) {
+          if (version === checkVersion || semver.satisfies(version, checkRange, true)) {
             matchedRanges.add(checkRange);
             let matchedVersions = rangesToVersion.get(checkRange);
             if (!matchedVersions) {
@@ -1120,7 +1120,7 @@ const optimizeResolutions = ({
 
       for (const [range, rangeInfo] of resolveMap) {
         const { version: originalVersion } = rangeInfo;
-        const version = semver.maxSatisfying(versions, range)!;
+        const version = semver.maxSatisfying(versions, range, true)!;
         if (version === originalVersion) continue;
 
         if (options.traceRangeUsages) {
