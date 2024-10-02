@@ -1,19 +1,15 @@
 import { program } from 'commander';
 
-import { add, AddOptions } from "./add";
-import { install } from "./install";
-import { remove } from "./remove";
+import { add, AddOptions } from './add';
+import { install } from './install';
+import { remove } from './remove';
 
-import { TOOL_NAME } from '../constants';
-
-const VERSION = '0.1.0';
+import { TOOL_NAME, VERSION } from '../constants';
 
 export const cli = async () => {
   let exitCode;
 
-  program
-    .name(TOOL_NAME)
-    .version(VERSION);
+  program.name(TOOL_NAME).version(VERSION);
 
   program
     .command('add [packages...]')
@@ -47,7 +43,7 @@ export const cli = async () => {
   program
     .command('run')
     .description('runs a script from the package')
-    .action(async () => { });
+    .action(async () => {});
 
   await program.parseAsync();
 
