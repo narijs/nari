@@ -40,4 +40,3 @@ Implemented experimental features:
   ```
   nari -h
   ```
-6.
