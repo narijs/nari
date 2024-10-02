@@ -2,53 +2,62 @@ import path from 'path';
 import crypto from 'crypto';
 
 import { Graph } from '../hoister';
-import { parseSpecifier } from "../resolver";
+import { parseSpecifier } from '../resolver';
 import { DOT_BIN, NODE_MODULES, BUILD_SCRIPTS } from '../constants';
 import { RESOLVE_STATE_FILE } from '../resolver/resolver';
 
-export type InstallEvent = {
-  type: InstallEventType.INSTALL;
-  id: string;
-  targetPath: string;
-  skipUnpack?: boolean;
+export type InstallEvent =
+  | {
+      type: InstallEventType.INSTALL;
+      id: string;
+      targetPath: string;
+      skipUnpack?: boolean;
 
-  tarballUrl: string;
-  binPath?: string;
-  bin?: Record<string, string>;
-} | {
-  type: InstallEventType.BUILD;
-  id: string;
-  targetPath: string;
-  optional?: boolean;
-  isWorkspace?: boolean;
+      tarballUrl: string;
+      binPath?: string;
+      bin?: Record<string, string>;
+    }
+  | {
+      type: InstallEventType.BUILD;
+      id: string;
+      targetPath: string;
+      optional?: boolean;
+      isWorkspace?: boolean;
 
-  buildScripts: Map<string, string>;
-  waitPaths: string[];
-} | {
-  type: InstallEventType.CLONE;
-  id: string;
-  targetPath: string;
-  skipUnpack?: boolean;
+      buildScripts: Map<string, string>;
+      waitPaths: string[];
+    }
+  | {
+      type: InstallEventType.CLONE;
+      id: string;
+      targetPath: string;
+      skipUnpack?: boolean;
 
-  sourcePath: string;
-  binPath?: string;
-  bin?: Record<string, string>;
-} | {
-  type: InstallEventType.LINK;
-  id: string;
-  targetPath: string;
+      sourcePath: string;
+      binPath?: string;
+      bin?: Record<string, string>;
+    }
+  | {
+      type: InstallEventType.LINK;
+      id: string;
+      targetPath: string;
 
-  sourcePath: string;
-} | {
-  type: InstallEventType.READDIR;
-  targetPath: string;
-} | {
-  type: InstallEventType.DELETE;
-  targetPath: string;
-  cleanOnly?: boolean;
-};
+      sourcePath: string;
+    }
+  | {
+      type: InstallEventType.READDIR;
+      targetPath: string;
+    }
+  | {
+      type: InstallEventType.DELETE;
+      targetPath: string;
+      cleanOnly?: boolean;
+    };
 
-export enum InstallLink { DIRECTORY = 'directory', SYMLINK = 'symlink' };
+export enum InstallLink {
+  DIRECTORY = 'directory',
+  SYMLINK = 'symlink',
+}
 export type InstallState = {
   id?: string;
   buildHash?: string;
@@ -62,16 +71,38 @@ type WorkInstallState = InstallState & {
   _pathKind?: PathKind;
 };
 
-export enum DirEntryType { FILE = 'file', DIRECTORY = 'directory', SYMLINK = 'symlink' };
-export type DirEntry = { name: string, type: DirEntryType };
-export enum InstallEventType { DELETE = 'delete', READDIR = 'readdir', INSTALL = 'install', BUILD = 'build', CLONE = 'clone', LINK = 'link' };
+export enum DirEntryType {
+  FILE = 'file',
+  DIRECTORY = 'directory',
+  SYMLINK = 'symlink',
+}
+export type DirEntry = { name: string; type: DirEntryType };
+export enum InstallEventType {
+  DELETE = 'delete',
+  READDIR = 'readdir',
+  INSTALL = 'install',
+  BUILD = 'build',
+  CLONE = 'clone',
+  LINK = 'link',
+}
 
-enum CleanStatus { CLEAN = 'clean', MISSING = 'missing' };
-enum PathKind { NODE_MODULES = 'node_modules', DOT_BIN = 'dot_bin', BIN_LINK = 'bin_link', SCOPE = 'scope', PACKAGE = 'package' };
+enum CleanStatus {
+  CLEAN = 'clean',
+  MISSING = 'missing',
+}
+enum PathKind {
+  NODE_MODULES = 'node_modules',
+  DOT_BIN = 'dot_bin',
+  BIN_LINK = 'bin_link',
+  SCOPE = 'scope',
+  PACKAGE = 'package',
+}
 
-const parseName = (name: string): { scope: string | null, packageName: string } => {
+const parseName = (name: string): { scope: string | null; packageName: string } => {
   const idx = name.indexOf('/');
-  return idx < 0 ? { scope: null, packageName: name } : { scope: name.substring(0, idx), packageName: name.substring(idx + 1) };
+  return idx < 0
+    ? { scope: null, packageName: name }
+    : { scope: name.substring(0, idx), packageName: name.substring(idx + 1) };
 };
 
 const getTransitiveDependencies = (workNode: Graph): Graph[] => {
@@ -81,8 +112,7 @@ const getTransitiveDependencies = (workNode: Graph): Graph[] => {
   const visitNode = (graphPath: Graph[]) => {
     let node = graphPath[graphPath.length - 1];
     node = node.workspace || node;
-    if (seenNodes.has(node))
-      return;
+    if (seenNodes.has(node)) return;
     seenNodes.add(node);
 
     if (node.dependencies) {
@@ -92,14 +122,21 @@ const getTransitiveDependencies = (workNode: Graph): Graph[] => {
     }
 
     dependencies.push(node);
-  }
+  };
 
   visitNode([workNode]);
 
   return dependencies;
 };
 
-const traverseGraph = (graph: Graph): { allNodes: Set<Graph>, buildNodes: Set<Graph>, nodePathMap: Map<Graph, string>, installState: WorkInstallState } => {
+const traverseGraph = (
+  graph: Graph,
+): {
+  allNodes: Set<Graph>;
+  buildNodes: Set<Graph>;
+  nodePathMap: Map<Graph, string>;
+  installState: WorkInstallState;
+} => {
   const allNodes = new Set<Graph>();
   const buildNodes = new Set<Graph>();
   const nodePathMap = new Map<Graph, string>();
@@ -132,8 +169,7 @@ const traverseGraph = (graph: Graph): { allNodes: Set<Graph>, buildNodes: Set<Gr
     const fsPath = node.workspacePath || path.join(parentFsPath!, NODE_MODULES, node.alias || name);
     nodePathMap.set(node, fsPath);
 
-    if (allNodes.has(node))
-      return;
+    if (allNodes.has(node)) return;
 
     let nmNode;
     let nextStateNode = stateNode;
@@ -158,7 +194,7 @@ const traverseGraph = (graph: Graph): { allNodes: Set<Graph>, buildNodes: Set<Gr
     if (node.bin) {
       const binNode = addPathToState(nmNode, PathKind.DOT_BIN, DOT_BIN);
 
-      Object.keys(node.bin).forEach(filename => {
+      Object.keys(node.bin).forEach((filename) => {
         addPathToState(binNode, PathKind.BIN_LINK, filename).id = node.id;
       });
     }
@@ -170,8 +206,7 @@ const traverseGraph = (graph: Graph): { allNodes: Set<Graph>, buildNodes: Set<Gr
     }
 
     for (const dep of node.dependencies || []) {
-      if (dep.parent !== node)
-        continue;
+      if (dep.parent !== node) continue;
       visitNode(dep, nextStateNode, fsPath);
     }
 
@@ -183,12 +218,13 @@ const traverseGraph = (graph: Graph): { allNodes: Set<Graph>, buildNodes: Set<Gr
   visitNode(graph, installState);
 
   return { allNodes, buildNodes, nodePathMap, installState };
-}
+};
 
 // Prefer build nodes with least dependencies
 const getPreferredBuildNodes = (buildDependencies: Map<Graph, Graph[]>): Graph[] =>
   Array.from(buildDependencies.keys()).sort(
-    (node1, node2) => buildDependencies.get(node1)!.length - buildDependencies.get(node2)!.length);
+    (node1, node2) => buildDependencies.get(node1)!.length - buildDependencies.get(node2)!.length,
+  );
 
 export const installStateDeserializer = (key, value) => {
   if (key === 'nodes') {
@@ -220,9 +256,18 @@ const getGraphPath = (node: Graph): Graph[] => {
   return graphPath;
 };
 
-function* cleanNode({ dirPath, stateNode, prevStateNode, existingPaths }: { dirPath: string, stateNode: WorkInstallState, prevStateNode?: InstallState, existingPaths: Set<string> }): Generator<InstallEvent, undefined, DirEntry[] | undefined> {
-  if (stateNode._cleanStatus)
-    return;
+function* cleanNode({
+  dirPath,
+  stateNode,
+  prevStateNode,
+  existingPaths,
+}: {
+  dirPath: string;
+  stateNode: WorkInstallState;
+  prevStateNode?: InstallState;
+  existingPaths: Set<string>;
+}): Generator<InstallEvent, undefined, DirEntry[] | undefined> {
+  if (stateNode._cleanStatus) return;
 
   if (dirPath !== NODE_MODULES && (!stateNode.nodes || !prevStateNode)) {
     yield { type: InstallEventType.DELETE, targetPath: dirPath };
@@ -241,16 +286,31 @@ function* cleanNode({ dirPath, stateNode, prevStateNode, existingPaths }: { dirP
         canRemoveWholeDir = false;
       }
 
-      if (entry.name.startsWith('.') && !stateNode.nodes?.has(entry.name))
-        continue;
+      if (entry.name.startsWith('.') && !stateNode.nodes?.has(entry.name)) continue;
 
       const targetPath = path.join(dirPath, entry.name);
       const entryStateNode = stateNode.nodes?.get(entry.name);
       const prevEntryNode = prevStateNode?.nodes?.get(entry.name);
-      const entryType = entryStateNode ? (entryStateNode.isLink || stateNode._pathKind === PathKind.DOT_BIN ? DirEntryType.SYMLINK : DirEntryType.DIRECTORY) : undefined;
+      const entryType = entryStateNode
+        ? entryStateNode.isLink || stateNode._pathKind === PathKind.DOT_BIN
+          ? DirEntryType.SYMLINK
+          : DirEntryType.DIRECTORY
+        : undefined;
 
-      const isGoodEntry = entryStateNode && prevEntryNode && prevEntryNode.id === entryStateNode.id && prevEntryNode.isLink === entryStateNode.isLink && entry.type === entryType;
-      const isWrongEntry = !entryStateNode || !prevEntryNode || (entryStateNode && prevEntryNode && (entryStateNode.id !== prevEntryNode.id || entryStateNode.isLink !== prevEntryNode.isLink || entry.type !== entryType));
+      const isGoodEntry =
+        entryStateNode &&
+        prevEntryNode &&
+        prevEntryNode.id === entryStateNode.id &&
+        prevEntryNode.isLink === entryStateNode.isLink &&
+        entry.type === entryType;
+      const isWrongEntry =
+        !entryStateNode ||
+        !prevEntryNode ||
+        (entryStateNode &&
+          prevEntryNode &&
+          (entryStateNode.id !== prevEntryNode.id ||
+            entryStateNode.isLink !== prevEntryNode.isLink ||
+            entry.type !== entryType));
       if (isGoodEntry) {
         canRemoveWholeDir = false;
         existingPaths.add(targetPath);
@@ -280,10 +340,22 @@ function* cleanNode({ dirPath, stateNode, prevStateNode, existingPaths }: { dirP
   }
 }
 
-function* cleanPackage({ pkg, installState, prevState, existingPaths }: { pkg: Graph, installState: WorkInstallState, prevState?: InstallState, existingPaths: Set<string> }): Generator<InstallEvent, undefined, DirEntry[] | undefined> {
+function* cleanPackage({
+  pkg,
+  installState,
+  prevState,
+  existingPaths,
+}: {
+  pkg: Graph;
+  installState: WorkInstallState;
+  prevState?: InstallState;
+  existingPaths: Set<string>;
+}): Generator<InstallEvent, undefined, DirEntry[] | undefined> {
   const graphPath = getGraphPath(pkg);
 
-  let stateNode = installState, prevNode = prevState, parentPath = '.';
+  let stateNode = installState,
+    prevNode = prevState,
+    parentPath = '.';
   for (const node of graphPath) {
     if (node.workspacePath) {
       parentPath = path.join(node.workspacePath, NODE_MODULES);
@@ -295,21 +367,33 @@ function* cleanPackage({ pkg, installState, prevState, existingPaths }: { pkg: G
       if (stateNode._pathKind === PathKind.NODE_MODULES) {
         yield* cleanNode({ dirPath: parentPath, stateNode, prevStateNode: prevNode, existingPaths });
 
-        if (stateNode._cleanStatus === CleanStatus.MISSING)
-          break;
+        if (stateNode._cleanStatus === CleanStatus.MISSING) break;
 
         const { name } = parseSpecifier(node.id);
         const { scope, packageName } = parseName(node.alias || name);
 
         if (scope) {
-          yield* cleanNode({ dirPath: path.join(parentPath, scope), stateNode: stateNode.nodes!.get(scope)!, prevStateNode: prevNode?.nodes?.get(scope), existingPaths });
+          yield* cleanNode({
+            dirPath: path.join(parentPath, scope),
+            stateNode: stateNode.nodes!.get(scope)!,
+            prevStateNode: prevNode?.nodes?.get(scope),
+            existingPaths,
+          });
         }
 
         if (node.bin) {
-          yield* cleanNode({ dirPath: path.join(parentPath, '.bin'), stateNode: stateNode.nodes!.get(DOT_BIN)!, prevStateNode: prevNode?.nodes?.get(DOT_BIN), existingPaths });
+          yield* cleanNode({
+            dirPath: path.join(parentPath, '.bin'),
+            stateNode: stateNode.nodes!.get(DOT_BIN)!,
+            prevStateNode: prevNode?.nodes?.get(DOT_BIN),
+            existingPaths,
+          });
         }
 
-        parentPath = [parentPath].concat(scope ? [scope] : []).concat([packageName, NODE_MODULES]).join(path.sep);
+        parentPath = [parentPath]
+          .concat(scope ? [scope] : [])
+          .concat([packageName, NODE_MODULES])
+          .join(path.sep);
         const packageStateNode = scope ? stateNode.nodes!.get(scope)! : stateNode;
         const packagePrevNode = scope ? prevNode?.nodes?.get(scope) : prevNode;
         const nextStateNode = packageStateNode.nodes!.get(packageName)!.nodes?.get(NODE_MODULES);
@@ -356,11 +440,10 @@ const cleanState = (state: WorkInstallState): InstallState | undefined => {
   };
 
   return cloneNode(state);
-}
+};
 
 const getStateNode = (targetPath: string, state: InstallState | undefined): InstallState | undefined => {
-  if (targetPath === '.' || !state)
-    return state;
+  if (targetPath === '.' || !state) return state;
 
   const segments = targetPath.split(path.sep);
   const firstNmIndex = targetPath.indexOf(NODE_MODULES);
@@ -387,16 +470,19 @@ const getBuildHash = (deps: Graph[], nodePathMap: Map<Graph, string>) => {
   }
 
   return hash.digest('hex');
-}
+};
 
 export const setBuildFailures = (state: InstallState, failures: Map<string, string>) => {
   for (const [targetPath, failedBuild] of failures) {
     const stateNode = getStateNode(targetPath, state)!;
     stateNode.buildFail = failedBuild;
   }
-}
+};
 
-export const installScript = function* (graph: Graph, prevState?: InstallState): Generator<InstallEvent, InstallState | undefined, DirEntry[] | undefined> {
+export const installScript = function* (
+  graph: Graph,
+  prevState?: InstallState,
+): Generator<InstallEvent, InstallState | undefined, DirEntry[] | undefined> {
   const { allNodes, buildNodes, nodePathMap, installState } = traverseGraph(graph);
   const buildDependencies = new Map<Graph, Graph[]>();
 
@@ -458,12 +544,28 @@ export const installScript = function* (graph: Graph, prevState?: InstallState):
     if (!node.workspacePath && (!isAlreadyUnpacked || bin)) {
       const sourcePath = cloneablePaths.get(node.id);
       if (sourcePath) {
-        yield { type: InstallEventType.CLONE, skipUnpack: isAlreadyUnpacked || undefined, sourcePath, targetPath, bin, id: node.id, binPath: bin ? binPath : undefined };
+        yield {
+          type: InstallEventType.CLONE,
+          skipUnpack: isAlreadyUnpacked || undefined,
+          sourcePath,
+          targetPath,
+          bin,
+          id: node.id,
+          binPath: bin ? binPath : undefined,
+        };
       } else {
         if (node.workspace) {
           yield { type: InstallEventType.LINK, sourcePath: node.workspace.workspacePath!, targetPath, id: node.id };
         } else {
-          yield { type: InstallEventType.INSTALL, skipUnpack: isAlreadyUnpacked || undefined, tarballUrl: node.tarballUrl!, targetPath, bin, id: node.id, binPath: bin ? binPath : undefined };
+          yield {
+            type: InstallEventType.INSTALL,
+            skipUnpack: isAlreadyUnpacked || undefined,
+            tarballUrl: node.tarballUrl!,
+            targetPath,
+            bin,
+            id: node.id,
+            binPath: bin ? binPath : undefined,
+          };
         }
       }
       if (!isAlreadyUnpacked) {
@@ -475,13 +577,23 @@ export const installScript = function* (graph: Graph, prevState?: InstallState):
     if (node.buildScripts) {
       const stateNode = getStateNode(targetPath, installState)!;
       const prevStateNode = getStateNode(targetPath, prevState);
-      if (stateNode && (isAlreadyUnpacked || node.workspacePath) && prevStateNode && stateNode.buildHash === prevStateNode.buildHash && !prevStateNode.buildFail)
+      if (
+        stateNode &&
+        (isAlreadyUnpacked || node.workspacePath) &&
+        prevStateNode &&
+        stateNode.buildHash === prevStateNode.buildHash &&
+        !prevStateNode.buildFail
+      )
         continue;
       const deps = buildDependencies.get(node)!;
 
       const waitPaths: string[] = [];
       for (const dep of deps) {
-        if (existingPaths.has(nodePathMap.get(dep)!) || (dep.workspacePath && (!dep.buildScripts || dep === node)) || (dep.workspace && !dep.workspace.buildScripts))
+        if (
+          existingPaths.has(nodePathMap.get(dep)!) ||
+          (dep.workspacePath && (!dep.buildScripts || dep === node)) ||
+          (dep.workspace && !dep.workspace.buildScripts)
+        )
           continue;
         const waitPath = installPaths.get(dep.id);
         if (!waitPath) {
@@ -491,7 +603,13 @@ export const installScript = function* (graph: Graph, prevState?: InstallState):
       }
 
       const buildScripts = new Map();
-      const startIdx = prevStateNode && prevStateNode.buildFail && (isAlreadyUnpacked || node.workspacePath) && prevStateNode.buildHash === stateNode.buildHash ? BUILD_SCRIPTS.indexOf(prevStateNode.buildFail) : 0;
+      const startIdx =
+        prevStateNode &&
+        prevStateNode.buildFail &&
+        (isAlreadyUnpacked || node.workspacePath) &&
+        prevStateNode.buildHash === stateNode.buildHash
+          ? BUILD_SCRIPTS.indexOf(prevStateNode.buildFail)
+          : 0;
       for (let idx = startIdx; idx < BUILD_SCRIPTS.length; idx++) {
         const scriptName = BUILD_SCRIPTS[idx];
         const scriptLine = node.buildScripts[scriptName];

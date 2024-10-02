@@ -7,7 +7,7 @@
     "test": "jest",
     "nari": "nari build && node --enable-source-maps lib/nari",
     "test:watch": "jest --watch",
-    "lint": "eslint --fix src/**/*.ts",
+    "lint": "eslint --fix",
     "prepack": "nari build && nari lint && nari test"
   },
   "repository": {
@@ -63,5 +63,5 @@
   "husky": {
     "pre-commit": "lint-staged"
   },
-  "lockTime": "2024-09-30T10:20:52.134Z"
+  "lockTime": "2024-10-02T12:40:33.928Z"
 }

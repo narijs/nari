@@ -9,8 +9,7 @@ const dirCache = new Set<string>();
 let isDownloadDirPrepared = false;
 
 export const ensureDownloadDirExists = async (): Promise<void> => {
-  if (isDownloadDirPrepared)
-    return;
+  if (isDownloadDirPrepared) return;
 
   const isExists = await isPathExists(DOWNLOAD_DIR);
   if (isExists) {
@@ -25,10 +24,11 @@ export const ensureDownloadDirExists = async (): Promise<void> => {
   isDownloadDirPrepared = true;
 };
 
-export const isPathExists = async (entryPath: string) => fs
-  .stat(entryPath)
-  .then(() => true)
-  .catch(() => false);
+export const isPathExists = async (entryPath: string) =>
+  fs
+    .stat(entryPath)
+    .then(() => true)
+    .catch(() => false);
 
 export const cachedCreateDir = async (dirPath: string) => {
   if (!dirCache.has(dirPath)) {
@@ -41,7 +41,7 @@ export const cachedCreateDir = async (dirPath: string) => {
       dirCache.add(subPath);
     }
   }
-}
+};
 
 const getCacheDir = () => {
   let cacheHome;
@@ -62,13 +62,15 @@ let isCacheDirExists: boolean | null = null;
 
 export const ensureCacheDirExists = async () => {
   if (isCacheDirExists === null) {
-    isCacheDirExists = await fs
-      .stat(path.join(CACHE_DIR, 'tarballs'))
-      .then(() => true)
-      .catch(() => false) && await fs
-      .stat(path.join(CACHE_DIR, 'metadata'))
-      .then(() => true)
-      .catch(() => false);
+    isCacheDirExists =
+      (await fs
+        .stat(path.join(CACHE_DIR, 'tarballs'))
+        .then(() => true)
+        .catch(() => false)) &&
+      (await fs
+        .stat(path.join(CACHE_DIR, 'metadata'))
+        .then(() => true)
+        .catch(() => false));
   }
 
   if (isCacheDirExists === false) {
@@ -93,4 +95,4 @@ export const atomicFileWrite = async (filePath: string, content: string | Buffer
   } finally {
     await fs.unlink(tmpPath);
   }
-}
+};

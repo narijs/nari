@@ -5,17 +5,17 @@ import { OutgoingHttpHeaders } from 'http2';
 
 let ipv6 = true;
 
-export const disableIpv6 = () => ipv6 = false;
+export const disableIpv6 = () => (ipv6 = false);
 
 const agent = new https.Agent({
   lookup: (hostname, opts, cb) => {
     dns.lookup(hostname, opts, (err, address, family) => {
       let resolvedAddress: string | LookupAddress[] = address;
       if (Array.isArray(address) && !ipv6) {
-        resolvedAddress = address.filter(a => a.family !== 6);
+        resolvedAddress = address.filter((a) => a.family !== 6);
       }
       cb(err, resolvedAddress as unknown as string, family);
-    })
+    });
   },
   keepAlive: true,
   maxSockets: 64,
@@ -25,12 +25,15 @@ https.globalAgent = agent;
 
 export type GetOptions = {
   headers?: OutgoingHttpHeaders;
-}
+};
 
-const request = async (url: string, options: http.RequestOptions): Promise<{ response: http.IncomingMessage, error?: undefined } | { response?: undefined, error: any }> => {
-  return new Promise(resolve => {
-    https.get(url, options, response => resolve({ response })).on('error', error => resolve({ error }));
-  })
+const request = async (
+  url: string,
+  options: http.RequestOptions,
+): Promise<{ response: http.IncomingMessage; error?: undefined } | { response?: undefined; error: any }> => {
+  return new Promise((resolve) => {
+    https.get(url, options, (response) => resolve({ response })).on('error', (error) => resolve({ error }));
+  });
 };
 
 const MAX_RETRIES = 5;
@@ -59,7 +62,7 @@ export const get = async (url: string, opts?: GetOptions): Promise<http.Incoming
 
     retries++;
     if (retries > 1) {
-      await new Promise(r => setTimeout(r, RETRY_TIMEOUT));
+      await new Promise((r) => setTimeout(r, RETRY_TIMEOUT));
     }
   } while (retries < MAX_RETRIES);
 

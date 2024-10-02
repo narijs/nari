@@ -1,25 +1,23 @@
-import { PurePackage } from "../../../resolver/workspace";
-import { RemoveEventType, removeScript } from "../removeScript";
+import { PurePackage } from '../../../resolver/workspace';
+import { RemoveEventType, removeScript } from '../removeScript';
 
 describe('remove script', () => {
   it('should support removing a dependency from the project', () => {
     const tree: PurePackage = {
       json: {
         dependencies: {
-          foo: '^1.0.0'
-        }
+          foo: '^1.0.0',
+        },
       },
-      workspacePath: '.'
+      workspacePath: '.',
     };
 
     const gen = removeScript(tree, ['foo']);
 
-    expect(gen.next().value).toEqual(
-      {
-        type: RemoveEventType.MODIFY,
-        json: {
-        }
-      });
+    expect(gen.next().value).toEqual({
+      type: RemoveEventType.MODIFY,
+      json: {},
+    });
     expect(gen.next()).toEqual({ done: true });
   });
 
@@ -27,19 +25,18 @@ describe('remove script', () => {
     const tree: PurePackage = {
       json: {
         dependencies: {
-          foo: '^1.0.0'
-        }
+          foo: '^1.0.0',
+        },
       },
-      workspacePath: '.'
+      workspacePath: '.',
     };
 
     const gen = removeScript(tree, ['foo', 'bar']);
 
-    expect(gen.next().value).toEqual(
-      {
-        type: RemoveEventType.NOT_FOUND,
-        message: expect.any(String)
-      });
+    expect(gen.next().value).toEqual({
+      type: RemoveEventType.NOT_FOUND,
+      message: expect.any(String),
+    });
     expect(gen.next()).toEqual({ done: true });
   });
 });

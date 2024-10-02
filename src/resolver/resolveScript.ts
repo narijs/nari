@@ -6,13 +6,13 @@ import { PurePackage } from './workspace';
 import { BUILD_SCRIPTS } from '../constants';
 
 type GraphId = {
-  protocol?: string,
-  scope?: string,
-  basename: string,
-  version?: string,
-  alias?: string,
-  resolutions?: Set<string>,
-  autoPeerNames?: Set<string>
+  protocol?: string;
+  scope?: string;
+  basename: string;
+  version?: string;
+  alias?: string;
+  resolutions?: Set<string>;
+  autoPeerNames?: Set<string>;
 };
 
 export type Package = {
@@ -25,7 +25,7 @@ export type Package = {
   workspaces?: Set<Package>;
 };
 
-export type MetadataMap = Map<string, { version: string, metaJson: any }>;
+export type MetadataMap = Map<string, { version: string; metaJson: any }>;
 
 export type ResolveOptions = {
   autoInstallPeers?: boolean;
@@ -39,17 +39,22 @@ export type ResolveOptions = {
   receivedMetadata?: Map<string, any>;
 };
 
-export type ResolveEvent = {
-  type: ResolveEventType.GET_METADATA;
-  name: string;
-  lockTime?: Date;
-} | {
-  type: ResolveEventType.NEXT_METADATA;
-};
+export type ResolveEvent =
+  | {
+      type: ResolveEventType.GET_METADATA;
+      name: string;
+      lockTime?: Date;
+    }
+  | {
+      type: ResolveEventType.NEXT_METADATA;
+    };
 
-export type PackageMetadata = { name: string, metadata: any, fresh: boolean };
+export type PackageMetadata = { name: string; metadata: any; fresh: boolean };
 
-export const enum ResolveEventType { GET_METADATA = 'get_metadata', NEXT_METADATA = 'next_metadata' };
+export const enum ResolveEventType {
+  GET_METADATA = 'get_metadata',
+  NEXT_METADATA = 'next_metadata',
+}
 
 export type ResolveResult = {
   graph: Graph;
@@ -59,17 +64,17 @@ export type ResolveResult = {
 export type ResolveState = {
   resolutions: Resolutions;
   lockTime: Date;
-}
+};
 
-export type Resolutions = Map<string, { meta: any, ranges: Map<string, string> }>;
+export type Resolutions = Map<string, { meta: any; ranges: Map<string, string> }>;
 
 type DeclaredPackageRanges = Map<string, Map<string, Set<string>>>;
 type ResolvedPackageRanges = Map<string, Map<string, ResolvedRangeInfo>>;
 type UnresolvedPackageRanges = Map<string, Set<string>>;
 type RequestedMetadata = Map<string, { fresh: boolean }>;
-type ReceivedMetadata = Map<string, { metadata: any, fresh: boolean }>;
+type ReceivedMetadata = Map<string, { metadata: any; fresh: boolean }>;
 
-type ResolvedRangeInfo = { name: string, range: string, version: string, isWorkspace?: boolean };
+type ResolvedRangeInfo = { name: string; range: string; version: string; isWorkspace?: boolean };
 type WorkspaceVersions = Map<string, Set<string>>;
 
 export const resolveStateDeserializer = (key, value) => {
@@ -90,10 +95,10 @@ export const resolveStateSerializer = (key, value) => {
   }
 };
 
-const getWorkspaceName = (node: PurePackage) => node.json.name as string || `workspace:${node.workspacePath}`;
-const getWorkspaceVersion = (node: PurePackage) => node.json.version as string || `0.0.0`;
+const getWorkspaceName = (node: PurePackage) => (node.json.name as string) || `workspace:${node.workspacePath}`;
+const getWorkspaceVersion = (node: PurePackage) => (node.json.version as string) || `0.0.0`;
 
-const parseRange = (range: string): { version: string, alias?: string, protocol?: string } => {
+const parseRange = (range: string): { version: string; alias?: string; protocol?: string } => {
   let version, alias, protocol;
 
   version = range;
@@ -112,15 +117,33 @@ const parseRange = (range: string): { version: string, alias?: string, protocol?
   return { version, alias, protocol };
 };
 
-const parsePackageName = (name: string): { scope?: string, basename: string } => {
+const parsePackageName = (name: string): { scope?: string; basename: string } => {
   const idx = name.indexOf('/');
   return idx < 0 ? { basename: name } : { scope: name.substring(0, idx), basename: name.substring(idx + 1) };
 };
 
-const stringifyGraphId = (graphId: GraphId): string => `${stringifyPackageId(graphId)}${graphId.alias ? '>' + graphId.alias : ''}${graphId.resolutions ? '#' + Array.from(graphId.resolutions).join(',') : ''}${graphId.autoPeerNames ? '|' + Array.from(graphId.autoPeerNames).join(',') : ''}`;
-const stringifyPackageId = (graphId: GraphId): string => `${graphId.protocol ? graphId.protocol + ':' : ''}${graphId.scope ? graphId.scope + '/' : ''}${graphId.basename}${graphId.version ? '@' + graphId.version : ''}`;
+const stringifyGraphId = (graphId: GraphId): string =>
+  `${stringifyPackageId(graphId)}${graphId.alias ? '>' + graphId.alias : ''}${graphId.resolutions ? '#' + Array.from(graphId.resolutions).join(',') : ''}${graphId.autoPeerNames ? '|' + Array.from(graphId.autoPeerNames).join(',') : ''}`;
+const stringifyPackageId = (graphId: GraphId): string =>
+  `${graphId.protocol ? graphId.protocol + ':' : ''}${graphId.scope ? graphId.scope + '/' : ''}${graphId.basename}${graphId.version ? '@' + graphId.version : ''}`;
 
-const assignId = ({ pkg, name, version, parentDependencyNames, resolutionPath, resolutions, options }: { pkg: PurePackage, name: string, version: string, parentDependencyNames: Set<string>, resolutionPath: string, resolutions: Map<string, string>, options: ResolveOptions }): { idProps: GraphId, dependencies: Map<string, string>, peerNames: Set<string>, optionalNames: Set<string> } => {
+const assignId = ({
+  pkg,
+  name,
+  version,
+  parentDependencyNames,
+  resolutionPath,
+  resolutions,
+  options,
+}: {
+  pkg: PurePackage;
+  name: string;
+  version: string;
+  parentDependencyNames: Set<string>;
+  resolutionPath: string;
+  resolutions: Map<string, string>;
+  options: ResolveOptions;
+}): { idProps: GraphId; dependencies: Map<string, string>; peerNames: Set<string>; optionalNames: Set<string> } => {
   const rawDependencies = getDependencies(pkg.json, options.prod ? false : !!pkg.workspacePath);
   const dependencies = new Map();
   const peerNames = new Set<string>();
@@ -128,7 +151,11 @@ const assignId = ({ pkg, name, version, parentDependencyNames, resolutionPath, r
   const idProps: GraphId = { ...parsePackageName(name), ...parseRange(version) };
 
   for (const [depName, depRange] of rawDependencies.regular) {
-    const { resolution, range } = getResolutionRange({ resolutions, resolutionPath: getResolutionPath(depName, resolutionPath), depRange });
+    const { resolution, range } = getResolutionRange({
+      resolutions,
+      resolutionPath: getResolutionPath(depName, resolutionPath),
+      depRange,
+    });
     if (resolution && !pkg.workspacePath) {
       if (!idProps.resolutions) {
         idProps.resolutions = new Set();
@@ -139,8 +166,7 @@ const assignId = ({ pkg, name, version, parentDependencyNames, resolutionPath, r
   }
 
   for (const [depName, depRange] of rawDependencies.peer) {
-    if (rawDependencies.optionalPeerNames.has(depName))
-      continue;
+    if (rawDependencies.optionalPeerNames.has(depName)) continue;
 
     if (options.autoInstallPeers) {
       if (!parentDependencyNames.has(depName)) {
@@ -160,11 +186,11 @@ const assignId = ({ pkg, name, version, parentDependencyNames, resolutionPath, r
   }
 
   return { idProps, dependencies, peerNames, optionalNames: rawDependencies.optionalNames };
-}
+};
 
 const getLibc = () => {
   if (process.platform === 'linux') {
-    const report = process.report?.getReport() || {} as any;
+    const report: any = process.report?.getReport() || ({} as any);
     if (report.header?.glibcVersionRuntime) {
       return 'glibc';
     } else if (Array.isArray(report.sharedObjects) && report.sharedObjects.some(isMusl)) {
@@ -172,13 +198,12 @@ const getLibc = () => {
     }
   }
   return null;
-}
+};
 
 const isMusl = (file) => file.includes('libc.musl-') || file.includes('ld-musl-');
 
 const isPackageJsonFieldCompatible = (actual: string | null, rules?: Array<string>) => {
-  if (!rules || !actual)
-    return true;
+  if (!rules || !actual) return true;
 
   let isNotAllowlist = true;
   let isBlocklist = false;
@@ -201,9 +226,29 @@ const isPackageJsonFieldCompatible = (actual: string | null, rules?: Array<strin
 
   // Blocklists with allowlisted items should be treated as allowlists for `os`, `cpu` and `libc` in `package.json`
   return isBlocklist && isNotAllowlist;
-}
+};
 
-const resolveRange = function* ({ name, range, resolvedPackageRanges, unresolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state }: { name: string, range: string, resolvedPackageRanges: ResolvedPackageRanges, unresolvedPackageRanges: UnresolvedPackageRanges, workspaceVersions?: WorkspaceVersions, requestedMetadata: RequestedMetadata, receivedMetadata: ReceivedMetadata, lockTime: Date, state?: ResolveState }) {
+const resolveRange = function* ({
+  name,
+  range,
+  resolvedPackageRanges,
+  unresolvedPackageRanges,
+  workspaceVersions,
+  requestedMetadata,
+  receivedMetadata,
+  lockTime,
+  state,
+}: {
+  name: string;
+  range: string;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  unresolvedPackageRanges: UnresolvedPackageRanges;
+  workspaceVersions?: WorkspaceVersions;
+  requestedMetadata: RequestedMetadata;
+  receivedMetadata: ReceivedMetadata;
+  lockTime: Date;
+  state?: ResolveState;
+}) {
   let resolvedRangeInfo = resolvedPackageRanges.get(name)?.get(range);
   if (!resolvedRangeInfo && workspaceVersions) {
     const versions = workspaceVersions.get(name);
@@ -240,7 +285,9 @@ const resolveRange = function* ({ name, range, resolvedPackageRanges, unresolved
     const availableVersions = Object.keys(metadata.versions);
     const versionsBeforeLock: string[] = [];
     const versionsAfterLock: string[] = [];
-    const times = Object.entries(metadata.time).map(([version, timeStr]) => ([version, new Date(timeStr as string)] as [string, Date])).sort((e1, e2) => e1[1].getTime() - e2[1].getTime());
+    const times = Object.entries(metadata.time)
+      .map(([version, timeStr]) => [version, new Date(timeStr as string)] as [string, Date])
+      .sort((e1, e2) => e1[1].getTime() - e2[1].getTime());
     for (const [v, t] of times) {
       if (metadata.versions[v]) {
         if (t <= lockTime) {
@@ -263,7 +310,9 @@ const resolveRange = function* ({ name, range, resolvedPackageRanges, unresolved
 
     if (!version) {
       if (metadataEntry.fresh) {
-        throw new Error(`Unable to resolve ${name}@${range}, ${metadata.name}, available versions: ${availableVersions}`);
+        throw new Error(
+          `Unable to resolve ${name}@${range}, ${metadata.name}, available versions: ${availableVersions}`,
+        );
       }
     } else {
       let resolvedRanges = resolvedPackageRanges.get(name);
@@ -298,21 +347,50 @@ const resolveRange = function* ({ name, range, resolvedPackageRanges, unresolved
   }
 
   return resolvedRangeInfo;
-}
+};
 
-const resolvePackage = function* ({ pkg, id, resolutionDependencies, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options }: { pkg: PurePackage, id: string, resolutionDependencies?: Map<string, string>, declaredPackageRanges: DeclaredPackageRanges, unresolvedPackageRanges: UnresolvedPackageRanges, resolvedPackageRanges: ResolvedPackageRanges, workspaceVersions: WorkspaceVersions, requestedMetadata: RequestedMetadata, receivedMetadata: ReceivedMetadata, lockTime: Date, state?: ResolveState, options: ResolveOptions }) {
-  if (declaredPackageRanges.has(id))
-    return;
+const resolvePackage = function* ({
+  pkg,
+  id,
+  resolutionDependencies,
+  declaredPackageRanges,
+  unresolvedPackageRanges,
+  resolvedPackageRanges,
+  workspaceVersions,
+  requestedMetadata,
+  receivedMetadata,
+  lockTime,
+  state,
+  options,
+}: {
+  pkg: PurePackage;
+  id: string;
+  resolutionDependencies?: Map<string, string>;
+  declaredPackageRanges: DeclaredPackageRanges;
+  unresolvedPackageRanges: UnresolvedPackageRanges;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  workspaceVersions: WorkspaceVersions;
+  requestedMetadata: RequestedMetadata;
+  receivedMetadata: ReceivedMetadata;
+  lockTime: Date;
+  state?: ResolveState;
+  options: ResolveOptions;
+}) {
+  if (declaredPackageRanges.has(id)) return;
 
   const declaredRanges = new Map();
   declaredPackageRanges.set(id, declaredRanges);
 
-  if (!isPackageJsonFieldCompatible(options.cpu!, pkg.json.cpu) || !isPackageJsonFieldCompatible(options.os!, pkg.json.os) || !isPackageJsonFieldCompatible(options.libc!, pkg.json.libc)) {
+  if (
+    !isPackageJsonFieldCompatible(options.cpu!, pkg.json.cpu) ||
+    !isPackageJsonFieldCompatible(options.os!, pkg.json.os) ||
+    !isPackageJsonFieldCompatible(options.libc!, pkg.json.libc)
+  ) {
     return;
   }
 
   const dependencies = getDependencies(pkg.json, options.prod ? false : !!pkg.workspacePath);
-  const allDependencies = new Set<{ depName: string, depRange: string }>();
+  const allDependencies = new Set<{ depName: string; depRange: string }>();
   for (const [depName, depRange] of dependencies.regular) {
     allDependencies.add({ depName, depRange });
   }
@@ -331,7 +409,6 @@ const resolvePackage = function* ({ pkg, id, resolutionDependencies, declaredPac
     }
   }
 
-
   for (const { depName, depRange } of allDependencies) {
     const { name, range } = parseSpecifier(depName, depRange);
 
@@ -342,7 +419,17 @@ const resolvePackage = function* ({ pkg, id, resolutionDependencies, declaredPac
     }
     ranges.add(range);
 
-    const resolvedRangeInfo = yield* resolveRange({ name, range, resolvedPackageRanges, unresolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state });
+    const resolvedRangeInfo = yield* resolveRange({
+      name,
+      range,
+      resolvedPackageRanges,
+      unresolvedPackageRanges,
+      workspaceVersions,
+      requestedMetadata,
+      receivedMetadata,
+      lockTime,
+      state,
+    });
     if (resolvedRangeInfo) {
       const { version, isWorkspace } = resolvedRangeInfo;
 
@@ -351,29 +438,124 @@ const resolvePackage = function* ({ pkg, id, resolutionDependencies, declaredPac
       if (!isWorkspace) {
         const pkg = { json: receivedMetadata.get(name)!.metadata.versions[version] };
 
-        yield* resolvePackage({ pkg, id: childId, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options });
+        yield* resolvePackage({
+          pkg,
+          id: childId,
+          declaredPackageRanges,
+          unresolvedPackageRanges,
+          resolvedPackageRanges,
+          workspaceVersions,
+          requestedMetadata,
+          receivedMetadata,
+          lockTime,
+          state,
+          options,
+        });
       }
     }
   }
-}
+};
 
-const resolveWorkspace = function* ({ pkg, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options }: { pkg: PurePackage, declaredPackageRanges: DeclaredPackageRanges, unresolvedPackageRanges: UnresolvedPackageRanges, resolvedPackageRanges: ResolvedPackageRanges, workspaceVersions: WorkspaceVersions, requestedMetadata: RequestedMetadata, receivedMetadata: ReceivedMetadata, lockTime: Date, state?: ResolveState, options: ResolveOptions }) {
+const resolveWorkspace = function* ({
+  pkg,
+  declaredPackageRanges,
+  unresolvedPackageRanges,
+  resolvedPackageRanges,
+  workspaceVersions,
+  requestedMetadata,
+  receivedMetadata,
+  lockTime,
+  state,
+  options,
+}: {
+  pkg: PurePackage;
+  declaredPackageRanges: DeclaredPackageRanges;
+  unresolvedPackageRanges: UnresolvedPackageRanges;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  workspaceVersions: WorkspaceVersions;
+  requestedMetadata: RequestedMetadata;
+  receivedMetadata: ReceivedMetadata;
+  lockTime: Date;
+  state?: ResolveState;
+  options: ResolveOptions;
+}) {
   const id = `${getWorkspaceName(pkg)}@${getWorkspaceVersion(pkg)}`;
-  yield* resolvePackage({ pkg, id, resolutionDependencies: getResolutionDependencies(pkg), declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options });
+  yield* resolvePackage({
+    pkg,
+    id,
+    resolutionDependencies: getResolutionDependencies(pkg),
+    declaredPackageRanges,
+    unresolvedPackageRanges,
+    resolvedPackageRanges,
+    workspaceVersions,
+    requestedMetadata,
+    receivedMetadata,
+    lockTime,
+    state,
+    options,
+  });
 
   if (pkg.workspaces) {
     for (const workspace of pkg.workspaces) {
-      yield* resolveWorkspace({ pkg: workspace, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options });
+      yield* resolveWorkspace({
+        pkg: workspace,
+        declaredPackageRanges,
+        unresolvedPackageRanges,
+        resolvedPackageRanges,
+        workspaceVersions,
+        requestedMetadata,
+        receivedMetadata,
+        lockTime,
+        state,
+        options,
+      });
     }
   }
-}
+};
 
-const createPackage = ({ pkg, name, version, optional, parentDependencyNames, resolvedPackageRanges, receivedMetadata, nodeMap, resolutionPath, resolutions, options }: { pkg: PurePackage, name: string, version: string, optional: boolean, parentDependencyNames: Set<string>, resolvedPackageRanges: ResolvedPackageRanges, receivedMetadata: ReceivedMetadata, nodeMap: Map<string, Graph>, resolutionPath: string, resolutions: Map<string, string>, options: ResolveOptions }): Graph | null => {
-  if (!pkg.workspacePath && (!isPackageJsonFieldCompatible(options.cpu!, pkg.json.cpu) || !isPackageJsonFieldCompatible(options.os!, pkg.json.os) || !isPackageJsonFieldCompatible(options.libc!, pkg.json.libc))) {
+const createPackage = ({
+  pkg,
+  name,
+  version,
+  optional,
+  parentDependencyNames,
+  resolvedPackageRanges,
+  receivedMetadata,
+  nodeMap,
+  resolutionPath,
+  resolutions,
+  options,
+}: {
+  pkg: PurePackage;
+  name: string;
+  version: string;
+  optional: boolean;
+  parentDependencyNames: Set<string>;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  receivedMetadata: ReceivedMetadata;
+  nodeMap: Map<string, Graph>;
+  resolutionPath: string;
+  resolutions: Map<string, string>;
+  options: ResolveOptions;
+}): Graph | null => {
+  if (
+    !pkg.workspacePath &&
+    (!isPackageJsonFieldCompatible(options.cpu!, pkg.json.cpu) ||
+      !isPackageJsonFieldCompatible(options.os!, pkg.json.os) ||
+      !isPackageJsonFieldCompatible(options.libc!, pkg.json.libc))
+  ) {
     return null;
   }
 
-  const { idProps, dependencies, peerNames, optionalNames } = assignId({ pkg, name, version, parentDependencyNames, resolutionPath, resolutions, options });
+  const { idProps, dependencies, peerNames, optionalNames } = assignId({
+    pkg,
+    name,
+    version,
+    parentDependencyNames,
+    resolutionPath,
+    resolutions,
+    options,
+  });
   const graphId = stringifyGraphId(idProps);
 
   let node: Graph | undefined;
@@ -446,8 +628,22 @@ const createPackage = ({ pkg, name, version, optional, parentDependencyNames, re
       }
       const { version, isWorkspace } = resolvedRangeInfo;
 
-      const pkg = isWorkspace ? { json: { name: depName, version } } : { json: receivedMetadata.get(name)!.metadata.versions[version] };
-      const depNode = createPackage({ pkg, name: depName, version: alias ? `npm:${alias}:${version}` : version, optional: optional || optionalNames.has(depName), parentDependencyNames: nextParentDependencyNames, resolvedPackageRanges, receivedMetadata, nodeMap, resolutions, resolutionPath: getResolutionPath(depName, resolutionPath), options });
+      const pkg = isWorkspace
+        ? { json: { name: depName, version } }
+        : { json: receivedMetadata.get(name)!.metadata.versions[version] };
+      const depNode = createPackage({
+        pkg,
+        name: depName,
+        version: alias ? `npm:${alias}:${version}` : version,
+        optional: optional || optionalNames.has(depName),
+        parentDependencyNames: nextParentDependencyNames,
+        resolvedPackageRanges,
+        receivedMetadata,
+        nodeMap,
+        resolutions,
+        resolutionPath: getResolutionPath(depName, resolutionPath),
+        options,
+      });
       if (depNode) {
         node.dependencies.push(depNode);
       }
@@ -459,17 +655,58 @@ const createPackage = ({ pkg, name, version, optional, parentDependencyNames, re
   }
 
   return node;
-}
+};
 
-const createWorkspace = ({ pkg, parentDependencyNames, resolvedPackageRanges, receivedMetadata, nodeMap, resolutionPath, resolutions, options }: { pkg: PurePackage, parentDependencyNames: Set<string>, resolvedPackageRanges: ResolvedPackageRanges, receivedMetadata: ReceivedMetadata, nodeMap: Map<string, Graph>, resolutionPath: string, resolutions: Map<string, string>, options: ResolveOptions }): Graph => {
+const createWorkspace = ({
+  pkg,
+  parentDependencyNames,
+  resolvedPackageRanges,
+  receivedMetadata,
+  nodeMap,
+  resolutionPath,
+  resolutions,
+  options,
+}: {
+  pkg: PurePackage;
+  parentDependencyNames: Set<string>;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  receivedMetadata: ReceivedMetadata;
+  nodeMap: Map<string, Graph>;
+  resolutionPath: string;
+  resolutions: Map<string, string>;
+  options: ResolveOptions;
+}): Graph => {
   const name = getWorkspaceName(pkg);
   const version = getWorkspaceVersion(pkg);
-  const node = createPackage({ pkg, name, version, optional: false, resolvedPackageRanges, receivedMetadata, nodeMap, parentDependencyNames, resolutionPath, resolutions, options })!;
+  const node = createPackage({
+    pkg,
+    name,
+    version,
+    optional: false,
+    resolvedPackageRanges,
+    receivedMetadata,
+    nodeMap,
+    parentDependencyNames,
+    resolutionPath,
+    resolutions,
+    options,
+  })!;
 
   if (pkg.workspaces) {
     node.workspaces = [];
     for (const workspace of pkg.workspaces) {
-      node.workspaces.push(createWorkspace({ pkg: workspace, parentDependencyNames, resolvedPackageRanges, receivedMetadata, nodeMap, resolutions, resolutionPath: getResolutionPath(getWorkspaceName(workspace), resolutionPath), options }));
+      node.workspaces.push(
+        createWorkspace({
+          pkg: workspace,
+          parentDependencyNames,
+          resolvedPackageRanges,
+          receivedMetadata,
+          nodeMap,
+          resolutions,
+          resolutionPath: getResolutionPath(getWorkspaceName(workspace), resolutionPath),
+          options,
+        }),
+      );
     }
   }
 
@@ -543,8 +780,7 @@ const readWorkspaceVersions = ({ pkg }: { pkg: PurePackage }): WorkspaceVersions
 };
 
 const refineGraph = (node: Graph, seen: Set<Graph> = new Set()) => {
-  if (seen.has(node))
-    return;
+  if (seen.has(node)) return;
   seen.add(node);
 
   if (node.dependencies) {
@@ -572,7 +808,13 @@ const refineGraph = (node: Graph, seen: Set<Graph> = new Set()) => {
   }
 };
 
-const getMetadataMapFromStateAndOptions = ({ state, options }: { state?: ResolveState, options: ResolveOptions }): ReceivedMetadata => {
+const getMetadataMapFromStateAndOptions = ({
+  state,
+  options,
+}: {
+  state?: ResolveState;
+  options: ResolveOptions;
+}): ReceivedMetadata => {
   const receivedMetadata = new Map();
   if (state) {
     for (const [name, { meta }] of state.resolutions) {
@@ -589,7 +831,11 @@ const getMetadataMapFromStateAndOptions = ({ state, options }: { state?: Resolve
   return receivedMetadata;
 };
 
-export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions, prevState?: ResolveState): Generator<ResolveEvent, ResolveResult, PackageMetadata | any> {
+export const resolveScript = function* (
+  pkg: PurePackage,
+  opts?: ResolveOptions,
+  prevState?: ResolveState,
+): Generator<ResolveEvent, ResolveResult, PackageMetadata | any> {
   const options: ResolveOptions = opts || {};
   options.cpu = options.cpu || process.arch;
   options.os = options.os || process.platform;
@@ -603,7 +849,18 @@ export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions,
   const receivedMetadata = getMetadataMapFromStateAndOptions({ state, options });
 
   const workspaceVersions = readWorkspaceVersions({ pkg });
-  yield* resolveWorkspace({ pkg, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, requestedMetadata, receivedMetadata, workspaceVersions, lockTime, state, options });
+  yield* resolveWorkspace({
+    pkg,
+    declaredPackageRanges,
+    unresolvedPackageRanges,
+    resolvedPackageRanges,
+    requestedMetadata,
+    receivedMetadata,
+    workspaceVersions,
+    lockTime,
+    state,
+    options,
+  });
 
   while (unresolvedPackageRanges.size !== 0) {
     const packageMetadata = yield { type: ResolveEventType.NEXT_METADATA };
@@ -626,7 +883,16 @@ export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions,
     if (unresolvedRanges) {
       do {
         const unresolvedRange = unresolvedRanges.values().next().value as string;
-        const resolvedRangeInfo = yield* resolveRange({ name: depName, range: unresolvedRange, resolvedPackageRanges, unresolvedPackageRanges, requestedMetadata, receivedMetadata, lockTime, state });
+        const resolvedRangeInfo = yield* resolveRange({
+          name: depName,
+          range: unresolvedRange,
+          resolvedPackageRanges,
+          unresolvedPackageRanges,
+          requestedMetadata,
+          receivedMetadata,
+          lockTime,
+          state,
+        });
         if (resolvedRangeInfo) {
           const version = resolvedRangeInfo.version;
           resolvedRanges.set(unresolvedRange, resolvedRangeInfo);
@@ -635,7 +901,19 @@ export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions,
           const json = packageMetadata.metadata.versions[version];
           const childId = `${depName}@${version}`;
 
-          yield* resolvePackage({ pkg: { json }, id: childId, declaredPackageRanges, unresolvedPackageRanges, resolvedPackageRanges, workspaceVersions, requestedMetadata, receivedMetadata, lockTime, state, options });
+          yield* resolvePackage({
+            pkg: { json },
+            id: childId,
+            declaredPackageRanges,
+            unresolvedPackageRanges,
+            resolvedPackageRanges,
+            workspaceVersions,
+            requestedMetadata,
+            receivedMetadata,
+            lockTime,
+            state,
+            options,
+          });
         } else {
           break;
         }
@@ -654,7 +932,16 @@ export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions,
   }
 
   const nodeMap = new Map();
-  const graph = createWorkspace({ pkg, parentDependencyNames: new Set(), resolvedPackageRanges, receivedMetadata, nodeMap, resolutionPath: getResolutionPath(getWorkspaceName(pkg)), resolutions: getWorkspaceResolutions(pkg), options });
+  const graph = createWorkspace({
+    pkg,
+    parentDependencyNames: new Set(),
+    resolvedPackageRanges,
+    receivedMetadata,
+    nodeMap,
+    resolutionPath: getResolutionPath(getWorkspaceName(pkg)),
+    resolutions: getWorkspaceResolutions(pkg),
+    options,
+  });
 
   refineGraph(graph);
 
@@ -670,13 +957,24 @@ export const resolveScript = function* (pkg: PurePackage, opts?: ResolveOptions,
   }
 
   return result;
-}
+};
 
 const minimizeJson = (json: any): any => {
   const result: any = {};
 
   for (const key of Object.keys(json)) {
-    if (['bin', 'os', 'cpu', 'libc', 'dependencies', 'optionalDependencies', 'peerDependencies', 'peerDependenciesMeta'].indexOf(key) >= 0) {
+    if (
+      [
+        'bin',
+        'os',
+        'cpu',
+        'libc',
+        'dependencies',
+        'optionalDependencies',
+        'peerDependencies',
+        'peerDependenciesMeta',
+      ].indexOf(key) >= 0
+    ) {
       result[key] = json[key];
     }
   }
@@ -703,7 +1001,7 @@ const minimizeMetadata = (metadata: any, versions: Set<string>): any => {
   }
 
   return result;
-}
+};
 
 const orderResolvedRanges = (resolvedPackageRanges: ResolvedPackageRanges) => {
   const originalResolveRanges = new Map(resolvedPackageRanges);
@@ -724,15 +1022,22 @@ const orderResolvedRanges = (resolvedPackageRanges: ResolvedPackageRanges) => {
   }
 };
 
-const getState = ({ resolvedPackageRanges, receivedMetadata, lockTime }: { resolvedPackageRanges: ResolvedPackageRanges, receivedMetadata: ReceivedMetadata, lockTime: Date }): ResolveState | undefined => {
+const getState = ({
+  resolvedPackageRanges,
+  receivedMetadata,
+  lockTime,
+}: {
+  resolvedPackageRanges: ResolvedPackageRanges;
+  receivedMetadata: ReceivedMetadata;
+  lockTime: Date;
+}): ResolveState | undefined => {
   const resolutions: Resolutions = new Map();
 
   for (const [name, resolveMap] of resolvedPackageRanges) {
     const ranges = new Map();
     const versions: string[] = [];
     for (const [range, { isWorkspace, version }] of resolveMap) {
-      if (isWorkspace)
-        continue;
+      if (isWorkspace) continue;
 
       ranges.set(range, version);
       versions.push(version);
@@ -750,7 +1055,17 @@ const getState = ({ resolvedPackageRanges, receivedMetadata, lockTime }: { resol
   return resolutions.size > 0 ? { resolutions, lockTime } : undefined;
 };
 
-const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolvedPackageRanges, options }: { workspaceVersions: WorkspaceVersions, declaredPackageRanges: DeclaredPackageRanges, resolvedPackageRanges: ResolvedPackageRanges, options: ResolveOptions }) => {
+const optimizeResolutions = ({
+  workspaceVersions,
+  declaredPackageRanges,
+  resolvedPackageRanges,
+  options,
+}: {
+  workspaceVersions: WorkspaceVersions;
+  declaredPackageRanges: DeclaredPackageRanges;
+  resolvedPackageRanges: ResolvedPackageRanges;
+  options: ResolveOptions;
+}) => {
   let shouldOptimizeAgain;
 
   do {
@@ -758,7 +1073,7 @@ const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolve
 
     for (const [name, resolveMap] of resolvedPackageRanges) {
       const resolveInfoSet = new Set(resolveMap.values());
-      const hasNonCaret = Array.from(resolveMap.keys()).find(x => !/^\^[0-9]+\.[0-9]+\.[0-9]+$/.test(x));
+      const hasNonCaret = Array.from(resolveMap.keys()).find((x) => !/^\^[0-9]+\.[0-9]+\.[0-9]+$/.test(x));
 
       if (resolveInfoSet.size === 1 || !hasNonCaret) {
         continue;
@@ -766,7 +1081,7 @@ const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolve
 
       let versionToRanges = new Map<string, Set<string>>();
       let rangesToVersion = new Map<string, Set<string>>();
-      const versionList = new Set(Array.from(resolveMap.values()).map(x => x.version));
+      const versionList = new Set(Array.from(resolveMap.values()).map((x) => x.version));
       for (const version of versionList) {
         const matchedRanges = new Set<string>();
         versionToRanges.set(version, matchedRanges);
@@ -806,8 +1121,7 @@ const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolve
       for (const [range, rangeInfo] of resolveMap) {
         const { version: originalVersion } = rangeInfo;
         const version = semver.maxSatisfying(versions, range)!;
-        if (version === originalVersion)
-          continue;
+        if (version === originalVersion) continue;
 
         if (options.traceRangeUsages) {
           console.log(`rewire ${name}@${range} from ${originalVersion} to ${version}`);
@@ -822,8 +1136,7 @@ const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolve
     const usedPackageRanges = new Map<string, Set<string>>();
 
     const addRangeUsages = (packageId: string, seen: Set<string>) => {
-      if (seen.has(packageId))
-        return;
+      if (seen.has(packageId)) return;
       seen.add(packageId);
 
       const declaredRanges = declaredPackageRanges.get(packageId);
@@ -873,7 +1186,7 @@ const optimizeResolutions = ({ workspaceVersions, declaredPackageRanges, resolve
       }
     }
   } while (shouldOptimizeAgain);
-}
+};
 
 export const getBuildScripts = (json: any): Record<string, string> | undefined => {
   const buildScripts = {};
@@ -889,10 +1202,13 @@ export const getBuildScripts = (json: any): Record<string, string> | undefined =
 
 const getPackageName = (name: string) => {
   const idx = name.indexOf('/');
-  return (idx < 0 ? name : name.substring(idx + 1));
+  return idx < 0 ? name : name.substring(idx + 1);
 };
 
-export const parseSpecifier = (fullSpecifier: string, specifierRange?: string): { name: string, range: string, alias: string } => {
+export const parseSpecifier = (
+  fullSpecifier: string,
+  specifierRange?: string,
+): { name: string; range: string; alias: string } => {
   let name, range;
   let ignoreIdx = fullSpecifier.indexOf('>');
   if (ignoreIdx < 0) {
@@ -915,19 +1231,26 @@ export const parseSpecifier = (fullSpecifier: string, specifierRange?: string): 
     }
   }
 
-  if (!range.startsWith('npm:'))
-    return { name, range, alias: '' };
+  if (!range.startsWith('npm:')) return { name, range, alias: '' };
 
   const realSpecifier = range.substring(4);
   const realIdx = realSpecifier.indexOf(`@`, 1);
-  if (realIdx < 0)
-    return { name: realSpecifier, range: '', alias: name };
+  if (realIdx < 0) return { name: realSpecifier, range: '', alias: name };
 
   return { name: realSpecifier.substring(0, realIdx), range: realSpecifier.substring(realIdx + 1), alias: name };
 };
 
-const getResolutionPath = (name: string, parentResolutionPath?: string) => (parentResolutionPath ? [parentResolutionPath] : []).concat(name.replaceAll('/', '#')).join('/');
-const getResolutionRange = ({ resolutions, resolutionPath, depRange }: { resolutions: Map<string, string>, resolutionPath: string, depRange: string }): { range: string, resolution?: string } => {
+const getResolutionPath = (name: string, parentResolutionPath?: string) =>
+  (parentResolutionPath ? [parentResolutionPath] : []).concat(name.replaceAll('/', '#')).join('/');
+const getResolutionRange = ({
+  resolutions,
+  resolutionPath,
+  depRange,
+}: {
+  resolutions: Map<string, string>;
+  resolutionPath: string;
+  depRange: string;
+}): { range: string; resolution?: string } => {
   let range = depRange;
   for (const [resolution, resolutionRange] of resolutions) {
     if (resolutionPath.endsWith(resolution)) {
@@ -941,10 +1264,7 @@ const getResolutionRange = ({ resolutions, resolutionPath, depRange }: { resolut
 const print = (graph: Graph): string => {
   const seen = new Map();
 
-  const printDependency = (
-    node: Graph,
-    { depPrefix, suffix }: { depPrefix: string; suffix: string }
-  ): string => {
+  const printDependency = (node: Graph, { depPrefix, suffix }: { depPrefix: string; suffix: string }): string => {
     let str = depPrefix;
     if (node.workspacePath) {
       str += 'workspace:';
@@ -963,16 +1283,12 @@ const print = (graph: Graph): string => {
     str += '\n';
 
     return str;
-  }
+  };
 
-  const visitDependency = (
-    node: Graph,
-    { prefix, depPrefix }: { prefix: string; depPrefix: string; }
-  ): string => {
+  const visitDependency = (node: Graph, { prefix, depPrefix }: { prefix: string; depPrefix: string }): string => {
     const seq = seen.get(node);
     let str = printDependency(node, { depPrefix, suffix: seq ? seq + '*' : seen.size + '' });
-    if (seq)
-      return str;
+    if (seq) return str;
 
     seen.set(node, seen.size);
 
