@@ -6,7 +6,10 @@ import { ResolveOptions } from '../../resolver/resolver';
 import { TOOL_NAME, VERSION } from '../../constants';
 
 export const install = async (options?: ResolveOptions): Promise<number> => {
-  console.log(`${TOOL_NAME} install ${VERSION}`);
+  if (!options?.skipBanner) {
+    console.log(`${TOOL_NAME} install ${VERSION}`);
+  }
+
   const resolveStart = Date.now();
   await ensureCacheDirExists();
   const graph = await resolve(options);

@@ -1,18 +1,22 @@
 import { promises as fs } from 'fs';
 import detectIndent from 'detect-indent';
 
-import { downloadMetadata } from "../../resolver/registry";
+import { ensureCacheDirExists } from '../../cache';
+import { downloadMetadata } from '../../resolver/registry';
 import { addScript, PackageMetadata, AddEventType, AddOptions } from './addScript';
 import { install } from '../install';
 export { AddOptions } from './addScript';
+import { TOOL_NAME, VERSION } from '../../constants';
 
 const getMetadata = async ({ name }: { name: string }) => {
   const metadata = await downloadMetadata(name);
 
   return { name, metadata };
-}
+};
 
 export const add = async (specifierList: string[], options: AddOptions): Promise<number> => {
+  console.log(`${TOOL_NAME} add ${VERSION}`);
+  await ensureCacheDirExists();
   const packageJsonPath = 'package.json';
   const text = await fs.readFile(packageJsonPath, 'utf8');
   const indent = detectIndent(text).indent || '  ';
@@ -31,8 +35,7 @@ export const add = async (specifierList: string[], options: AddOptions): Promise
       next = script.next(nextArg);
       nextArg = undefined;
 
-      if (next.done)
-        break;
+      if (next.done) break;
 
       const step = next.value;
       if (step.type === AddEventType.GET_METADATA) {
@@ -57,8 +60,8 @@ export const add = async (specifierList: string[], options: AddOptions): Promise
   }
 
   if (isModified) {
-    return await install({ metadata });
+    return await install({ metadata, skipBanner: true });
   } else {
     return 0;
   }
-}
+};
