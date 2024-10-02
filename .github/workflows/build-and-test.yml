@@ -28,5 +28,7 @@ jobs:
         run: |
           npm i -g nari
 
-      - name: Build, lint and test
-        run: nari prepack
+      - name: Install, build, lint and test
+        run: |
+          nari
+          nari prepack
