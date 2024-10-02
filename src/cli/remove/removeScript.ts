@@ -1,15 +1,20 @@
-import { PurePackage } from "../../resolver/workspace";
-import { DEPENDENCY_TYPES } from "../../constants";
+import { PurePackage } from '../../resolver/workspace';
+import { DEPENDENCY_TYPES } from '../../constants';
 
-export enum RemoveEventType { MODIFY = 'modify', NOT_FOUND = 'not_found' };
+export enum RemoveEventType {
+  MODIFY = 'modify',
+  NOT_FOUND = 'not_found',
+}
 
-export type RemoveEvent = {
-  type: RemoveEventType.MODIFY;
-  json: any;
-} | {
-  type: RemoveEventType.NOT_FOUND;
-  message: string;
-};
+export type RemoveEvent =
+  | {
+      type: RemoveEventType.MODIFY;
+      json: any;
+    }
+  | {
+      type: RemoveEventType.NOT_FOUND;
+      message: string;
+    };
 
 export const removeScript = function* (pkg: PurePackage, nameList: string[]): Generator<RemoveEvent, any, any> {
   let isModified = false;
@@ -39,4 +44,4 @@ export const removeScript = function* (pkg: PurePackage, nameList: string[]): Ge
   if (isModified) {
     yield { type: RemoveEventType.MODIFY, json: nextJson };
   }
-}
+};

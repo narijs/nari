@@ -26,19 +26,19 @@ describe('hoist', () => {
       id: '.',
       workspaces: [
         { id: 'w1', workspacePath: 'w1', dependencies: [{ id: 'w2' }] },
-        { id: 'w2', workspacePath: 'w2' }
+        { id: 'w2', workspacePath: 'w2' },
       ],
-      workspacePath: '.'
+      workspacePath: '.',
     };
 
     let hoistedGraph: Graph = {
       id: '.',
       workspaces: [
         { id: 'w1', workspacePath: 'w1' },
-        { id: 'w2', workspacePath: 'w2' }
+        { id: 'w2', workspacePath: 'w2' },
       ],
       dependencies: [{ id: 'w2' }],
-      workspacePath: '.'
+      workspacePath: '.',
     };
 
     hoistedGraph.workspace = hoistedGraph;
@@ -273,7 +273,7 @@ describe('hoist', () => {
             {
               id: 'B@X',
             },
-            { id: 'I@X', dependencies: [{ id: 'B@Z' }] }
+            { id: 'I@X', dependencies: [{ id: 'B@Z' }] },
           ],
         },
         { id: 'H@Y' },
@@ -1076,7 +1076,10 @@ describe('hoist', () => {
     // should not be changed by hoisting
     const graph: Graph = {
       id: '.',
-      workspaces: [{ id: 'w1', dependencies: [{ id: 'B@X' }] }, { id: 'w2', dependencies: [{ id: 'w1' }] }],
+      workspaces: [
+        { id: 'w1', dependencies: [{ id: 'B@X' }] },
+        { id: 'w2', dependencies: [{ id: 'w1' }] },
+      ],
       dependencies: [{ id: 'B@Y' }, { id: 'w1@X' }],
     };
 
@@ -1505,11 +1508,12 @@ describe('hoist', () => {
           dependencies: [
             {
               id: 'B',
-              reason: 'hoisting B to . will result in usage of \'none\' instead of C',
+              reason: "hoisting B to . will result in usage of 'none' instead of C",
             },
             {
-              id: 'C', peerNames: ['D'],
-              reason: 'peer dependency was not hoisted, due to D@X is blocked by a conflicting dependency D@Y at .'
+              id: 'C',
+              peerNames: ['D'],
+              reason: 'peer dependency was not hoisted, due to D@X is blocked by a conflicting dependency D@Y at .',
             },
             {
               id: 'D@X',
@@ -1528,7 +1532,7 @@ describe('hoist', () => {
     // . -> A -> B (bin S) -> C -> D (bin S)
     // should be hoisted to:
     // . -> A
-    //   -> B (bin S) 
+    //   -> B (bin S)
     //   -> C -> D (bin S)
     // D cannot be hoisted further, because of the conflict on bin entry 'S' with 'A'
     const graph: Graph = {
@@ -1540,11 +1544,17 @@ describe('hoist', () => {
           dependencies: [
             {
               id: 'B',
-              dependencies: [{
-                id: 'C', dependencies: [{
-                  id: 'D', bin: { S: '' },
-                }]
-              }],
+              dependencies: [
+                {
+                  id: 'C',
+                  dependencies: [
+                    {
+                      id: 'D',
+                      bin: { S: '' },
+                    },
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -1557,14 +1567,20 @@ describe('hoist', () => {
         {
           id: 'A',
           bin: { S: '' },
-        }, {
-          id: 'B'
-        }, {
-          id: 'C', dependencies: [{
-            id: 'D', bin: { S: '' },
-            reason: 'D is blocked by the coflicting bin script S from A at .',
-          }]
-        }
+        },
+        {
+          id: 'B',
+        },
+        {
+          id: 'C',
+          dependencies: [
+            {
+              id: 'D',
+              bin: { S: '' },
+              reason: 'D is blocked by the coflicting bin script S from A at .',
+            },
+          ],
+        },
       ],
     };
 
@@ -1578,7 +1594,7 @@ describe('hoist', () => {
         { id: 'w1', buildScripts: { a: '1' } },
         { id: 'w2', buildScripts: { b: '1' }, dependencies: [{ id: 'w1' }] },
       ],
-    }
+    };
 
     const hoistedGraph: Graph = {
       id: '.',

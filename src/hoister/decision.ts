@@ -8,20 +8,20 @@ export enum Hoistable {
 
 export type HoistingDecision =
   | {
-    isHoistable: Hoistable.LATER;
-    queueIndex: number;
-  }
+      isHoistable: Hoistable.LATER;
+      queueIndex: number;
+    }
   | {
-    isHoistable: Hoistable.YES;
-    newParentIndex: number;
-    reason?: string;
-  }
+      isHoistable: Hoistable.YES;
+      newParentIndex: number;
+      reason?: string;
+    }
   | {
-    isHoistable: Hoistable.DEPENDS;
-    dependsOn: Set<PackageName>;
-    newParentIndex: number;
-    reason?: string;
-  };
+      isHoistable: Hoistable.DEPENDS;
+      dependsOn: Set<PackageName>;
+      newParentIndex: number;
+      reason?: string;
+    };
 
 export type FinalDecisions = {
   decisionMap: Map<PackageName, HoistingDecision>;
@@ -37,7 +37,7 @@ type DecisionOptions = {
 export const getHoistingDecision = (
   graphPath: WorkGraph[],
   depName: PackageName,
-  currentPriorityDepth: number
+  currentPriorityDepth: number,
 ): HoistingDecision => {
   const parentPkg = graphPath[graphPath.length - 1];
   const dep = parentPkg.dependencies!.get(depName)!;
@@ -60,7 +60,7 @@ export const getHoistingDecision = (
         priorityDepth = newParentDep.queueIndex;
       } else {
         reason = `${dep.id} is blocked by a conflicting dependency ${newParentDep.id} at ${printGraphPath(
-          graphPath.slice(0, idx + 1)
+          graphPath.slice(0, idx + 1),
         )}`;
       }
       break;
@@ -101,7 +101,13 @@ export const getHoistingDecision = (
 
       const newParentDep = newParentPkg.dependencies?.get(depName);
       if (!newParentPkg.hoistingPriorities.get(depName)) {
-        console.log(depName, graphPath.map(n => n.id), parentPkg.dependencies?.get('@gqlapp/look-client-react')?.workspace?.id, parentPkg.dependencies?.get('@gqlapp/look-client-react')?.workspace === parentPkg.dependencies?.get('@gqlapp/look-client-react'));
+        console.log(
+          depName,
+          graphPath.map((n) => n.id),
+          parentPkg.dependencies?.get('@gqlapp/look-client-react')?.workspace?.id,
+          parentPkg.dependencies?.get('@gqlapp/look-client-react')?.workspace ===
+            parentPkg.dependencies?.get('@gqlapp/look-client-react'),
+        );
       }
       priorityDepth = newParentPkg.hoistingPriorities.get(depName)!.indexOf(dep.id);
       if (!newParentDep) {
@@ -122,7 +128,7 @@ export const getHoistingDecision = (
             if (availableId !== originalId) {
               canBeHoisted = false;
               reason = `hoisting ${dep.id} to ${printGraphPath(
-                graphPath.slice(0, newParentIndex + 1)
+                graphPath.slice(0, newParentIndex + 1),
               )} will result in usage of ${availableId || "'none'"} instead of ${originalId}`;
               break;
             }
@@ -164,7 +170,7 @@ export const getHoistingDecision = (
                 if (peerParentIdx > newParentIndex) {
                   newParentIndex = peerParentIdx;
                   reason = `unable to hoist ${dep.id} over peer dependency ${printGraphPath(
-                    graphPath.slice(0, newParentIndex + 1).concat([peerDep])
+                    graphPath.slice(0, newParentIndex + 1).concat([peerDep]),
                   )}`;
                 }
               }
@@ -199,7 +205,7 @@ export const getHoistingDecision = (
 export const finalizeDependedDecisions = (
   graphPath: WorkGraph[],
   preliminaryDecisionMap: DecisionMap,
-  opts?: DecisionOptions
+  opts?: DecisionOptions,
 ): FinalDecisions => {
   const parentPkg = graphPath[graphPath.length - 1];
   const options = opts || { trace: false };
@@ -302,7 +308,13 @@ export const finalizeDependedDecisions = (
   }
 
   if (options.trace) {
-    const prettifyDecision = (decision: HoistingDecision): any => ({ ...decision, isHoistable: decision.isHoistable !== Hoistable.YES || decision.newParentIndex !== graphPath.length - 1 ? decision.isHoistable.toString() : 'NO' });
+    const prettifyDecision = (decision: HoistingDecision): any => ({
+      ...decision,
+      isHoistable:
+        decision.isHoistable !== Hoistable.YES || decision.newParentIndex !== graphPath.length - 1
+          ? decision.isHoistable.toString()
+          : 'NO',
+    });
 
     for (const depName of Array.from(finalDecisions.decisionMap.keys()).sort()) {
       const decision = finalDecisions.decisionMap.get(depName)!;

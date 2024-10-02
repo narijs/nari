@@ -10,9 +10,17 @@ export type PurePackage = {
   json: any;
   workspacePath?: string;
   workspaces?: PurePackage[];
-}
+};
 
-export const readWorkspaceTree = async ({ json, relativePath, directories }: { json: any, relativePath: string, directories?: string[] }): Promise<PurePackage> => {
+export const readWorkspaceTree = async ({
+  json,
+  relativePath,
+  directories,
+}: {
+  json: any;
+  relativePath: string;
+  directories?: string[];
+}): Promise<PurePackage> => {
   const pkg: PurePackage = { json, workspacePath: relativePath };
 
   const workspaceConfig = Array.isArray(json.workspaces) ? { packages: json.workspaces } : json.workspaces;
@@ -36,8 +44,7 @@ export const readWorkspaceTree = async ({ json, relativePath, directories }: { j
         pkg.workspaces = pkg.workspaces || [];
         pkg.workspaces.push(workspace);
       } catch (e: any) {
-        if (e?.code !== 'ENOENT')
-          throw e;
+        if (e?.code !== 'ENOENT') throw e;
       }
     }
   }

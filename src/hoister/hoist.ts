@@ -233,8 +233,8 @@ export const toWorkGraph = (rootPkg: Graph): WorkGraph => {
           `Package ${pkg.id}${
             pkg.alias ? ' with alias ' + pkg.alias : ''
           } has multiple instances in the graph, which is disallowed:\n1: ${JSON.stringify(
-            seenIdInstance.node
-          )}, parent: ${seenIdInstance.parent?.id}\n2: ${JSON.stringify(pkg)}, parent: ${parent?.id}`
+            seenIdInstance.node,
+          )}, parent: ${seenIdInstance.parent?.id}\n2: ${JSON.stringify(pkg)}, parent: ${parent?.id}`,
         );
       }
       idMap.set(aliasedId, { node: pkg, parent });
@@ -472,7 +472,7 @@ const fromWorkGraph = (graph: WorkGraph): Graph => {
 
     if (node.workspaces) {
       const sortedEntries = Array.from(node.workspaces.entries()).sort((x1, x2) =>
-        x1[0] === x2[0] ? 0 : x1[0] < x2[0] ? -1 : 1
+        x1[0] === x2[0] ? 0 : x1[0] < x2[0] ? -1 : 1,
       );
 
       pkg.workspaces = [];
@@ -493,7 +493,7 @@ const fromWorkGraph = (graph: WorkGraph): Graph => {
 
     if (node.dependencies) {
       const sortedEntries = Array.from(node.dependencies.entries()).sort((x1, x2) =>
-        x1[0] === x2[0] ? 0 : x1[0] < x2[0] ? -1 : 1
+        x1[0] === x2[0] ? 0 : x1[0] < x2[0] ? -1 : 1,
       );
 
       pkg.dependencies = [];
@@ -535,7 +535,7 @@ const hoistDependencies = (
   options: HoistingOptions,
   hoistingQueue: HoistingQueue,
   lastWorkspaceIndex: number,
-  workspaceUsageRoutes: WorkspaceUsageRoutes
+  workspaceUsageRoutes: WorkspaceUsageRoutes,
 ): boolean => {
   let wasGraphChanged = false;
   const parentPkg = graphPath[graphPath.length - 1];
@@ -565,7 +565,7 @@ const hoistDependencies = (
               usageGraphPath.map((x) => x.id).join('/'),
               depName,
               'decision:',
-              usageDecision
+              usageDecision,
             );
           }
           if (usageDecision.isHoistable === Hoistable.LATER) {
@@ -587,7 +587,7 @@ const hoistDependencies = (
                 if (originalIndex > decision.newParentIndex) {
                   decision.newParentIndex = originalIndex;
                   decision.reason = `dependency was not hoisted due to ${usageDecision.reason!} at alternative usage route: ${printGraphPath(
-                    usageGraphPath
+                    usageGraphPath,
                   )}`;
                   if (options.trace) {
                     console.log('updated decision:', decision);
@@ -661,7 +661,7 @@ const hoistDependencies = (
                 if (options.trace) {
                   console.log(
                     `clearing previous lookup dependency by ${dep.id} on ${pkgDep.id} in`,
-                    graphPath.slice(0, idx + 1).map((x) => x.id)
+                    graphPath.slice(0, idx + 1).map((x) => x.id),
                   );
                 }
                 pkg.dependencies!.delete(name);
@@ -694,8 +694,8 @@ const hoistDependencies = (
       if (log) {
         console.log(
           `Contracts violated after hoisting ${Array.from(finalDecisions.circularPackageNames)} from ${printGraphPath(
-            graphPath
-          )}\n${log}${print(graphPath[0])}`
+            graphPath,
+          )}\n${log}${print(graphPath[0])}`,
         );
       }
     }
@@ -713,7 +713,7 @@ const hoistDependencies = (
             }`,
             decision,
             'previous:',
-            parentPkg.lastDecisions.get(depName)
+            parentPkg.lastDecisions.get(depName),
           );
         }
         hoistDependency(dep, depName, decision.newParentIndex);
@@ -724,8 +724,8 @@ const hoistDependencies = (
           if (log) {
             throw new Error(
               `Contracts violated after hoisting ${depName} from ${printGraphPath(graphPath)}\n${log}${print(
-                graphPath[0]
-              )}`
+                graphPath[0],
+              )}`,
             );
           }
         }
@@ -741,7 +741,7 @@ const hoistDependencies = (
           'to index:',
           decision.queueIndex,
           'current index:',
-          queueIndex
+          queueIndex,
         );
       }
       dep.queueIndex = decision.queueIndex;
@@ -832,7 +832,7 @@ const hoistGraph = (graph: WorkGraph, options: HoistingOptions): boolean => {
             options,
             hoistingQueue,
             lastWorkspaceIndex,
-            workspaceUsageRoutes
+            workspaceUsageRoutes,
           )
         ) {
           wasGraphChanged = true;
@@ -897,7 +897,7 @@ const hoistGraph = (graph: WorkGraph, options: HoistingOptions): boolean => {
           options,
           hoistingQueue,
           lastWorkspaceIndex,
-          workspaceUsageRoutes
+          workspaceUsageRoutes,
         )
       ) {
         wasGraphChanged = true;
@@ -1079,7 +1079,7 @@ const checkContracts = (graph: WorkGraph): string => {
 
         if (actualDep?.id !== originalDep.id) {
           log += `Expected ${originalDep.id} for ${printGraphPath(graphPath.slice(0, -1))}, but found: ${printGraphPath(
-            getLatestGrapPath(actualDep)
+            getLatestGrapPath(actualDep),
           )}`;
           if (actualDep?.newParent) {
             log += ` previously hoisted from ${printGraphPath(getOriginalGrapPath(actualDep))}`;
@@ -1133,9 +1133,9 @@ const checkContracts = (graph: WorkGraph): string => {
               log += ` previously hoisted from ${printGraphPath(getOriginalGrapPath(actualPeerDep))}`;
             }
             log += ` for ${printGraphPath(
-              graphPath
+              graphPath,
             )} to be shared with parent, but parent uses peer dependency from ${printGraphPath(
-              getLatestGrapPath(parentPeerDep)
+              getLatestGrapPath(parentPeerDep),
             )} instead\n`;
           }
         }
@@ -1171,7 +1171,7 @@ const checkContracts = (graph: WorkGraph): string => {
 const print = (graph: WorkGraph): string => {
   const printDependency = (
     graphPath: WorkGraph[],
-    { prefix, depPrefix }: { prefix: string; depPrefix: string }
+    { prefix, depPrefix }: { prefix: string; depPrefix: string },
   ): string => {
     const node = graphPath[graphPath.length - 1];
     let str = depPrefix;

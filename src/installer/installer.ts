@@ -10,14 +10,22 @@ import { Graph } from '../hoister';
 import { parseSpecifier } from '../resolver';
 import { CACHE_DIR, cachedCreateDir, atomicFileWrite, isPathExists } from '../cache';
 import { get } from '../net';
-import { DirEntry, DirEntryType, InstallEventType, installScript, setBuildFailures, installStateDeserializer, installStateSerializer } from './installScript';
+import {
+  DirEntry,
+  DirEntryType,
+  InstallEventType,
+  installScript,
+  setBuildFailures,
+  installStateDeserializer,
+  installStateSerializer,
+} from './installScript';
 import { runCommand } from '../runCommand';
 import { NODE_MODULES } from '../constants';
 
 const INSTALL_STATE_PATH = path.join(NODE_MODULES, '.install-state.json');
 const INSTALL_STATE_VERSION = '1';
 
-type TarballEntry = { location: string; mode: number; };
+type TarballEntry = { location: string; mode: number };
 type TarballMap = Map<string, TarballEntry[]>;
 
 const downloadTarball = async (name: string, version: string, tarballUrl: string): Promise<Buffer> => {
@@ -27,17 +35,23 @@ const downloadTarball = async (name: string, version: string, tarballUrl: string
 
   const response = await get(tarballUrl);
   if (response.statusCode !== 200) {
-    throw new Error(`Received ${response.statusCode}: ${response.statusMessage} from the registry while downloading ${tarballUrl}`);
+    throw new Error(
+      `Received ${response.statusCode}: ${response.statusMessage} from the registry while downloading ${tarballUrl}`,
+    );
   } else {
     const unzip = zlib.createGunzip();
     const chunks: Buffer[] = [];
 
-    await pipeline(response, unzip, new Writable({
-      write(chunk, _encoding, callback) {
-        chunks.push(chunk);
-        callback();
-      },
-    }));
+    await pipeline(
+      response,
+      unzip,
+      new Writable({
+        write(chunk, _encoding, callback) {
+          chunks.push(chunk);
+          callback();
+        },
+      }),
+    );
 
     const body = Buffer.concat(chunks);
 
@@ -47,8 +61,8 @@ const downloadTarball = async (name: string, version: string, tarballUrl: string
 
     await atomicFileWrite(getTarballCacheFilePath(name, version), body);
 
-    return body;  
-  } 
+    return body;
+  }
 };
 
 const unpackTarball = async (dirPath: string, buffer: Buffer): Promise<TarballEntry[]> => {
@@ -87,7 +101,7 @@ const unpackTarball = async (dirPath: string, buffer: Buffer): Promise<TarballEn
   await pipeline(passthrough, extract);
 
   return entries;
-}
+};
 
 const getTarballBaseName = (name: string, version: string): string => `${name.replaceAll('/', '+')}-${version}`;
 const getTarballName = (name: string, version: string): string => `${getTarballBaseName(name, version)}.tar`;
@@ -114,16 +128,25 @@ const getCachedTarball = async (name: string, version: string): Promise<Buffer |
   } else {
     return null;
   }
-}
+};
 
-const installBin = async ({ bin, binSet, dirPath, binPath }: { bin: any, binSet: Set<string>, dirPath: string, binPath: string }) => {
+const installBin = async ({
+  bin,
+  binSet,
+  dirPath,
+  binPath,
+}: {
+  bin: any;
+  binSet: Set<string>;
+  dirPath: string;
+  binPath: string;
+}) => {
   if (bin) {
     await cachedCreateDir(binPath);
 
     for (const [scriptName, scriptPath] of Object.entries<string>(bin)) {
       const dstPath = path.join(binPath, scriptName);
-      if (binSet.has(dstPath))
-        continue;
+      if (binSet.has(dstPath)) continue;
       binSet.add(dstPath);
 
       const srcPath = path.join(dirPath, scriptPath);
@@ -135,7 +158,25 @@ const installBin = async ({ bin, binSet, dirPath, binPath }: { bin: any, binSet:
   }
 };
 
-const installTask = async ({ id, targetPath, tarballMap, tarballUrl, bin, binSet, binPath, skipUnpack }: { id: string, targetPath: string, tarballUrl: string, tarballMap: TarballMap, bin?: Record<string, string>, binSet: Set<string>, binPath: string, skipUnpack: string }) => {
+const installTask = async ({
+  id,
+  targetPath,
+  tarballMap,
+  tarballUrl,
+  bin,
+  binSet,
+  binPath,
+  skipUnpack,
+}: {
+  id: string;
+  targetPath: string;
+  tarballUrl: string;
+  tarballMap: TarballMap;
+  bin?: Record<string, string>;
+  binSet: Set<string>;
+  binPath: string;
+  skipUnpack: string;
+}) => {
   if (!skipUnpack) {
     const { name, range: version } = parseSpecifier(id);
 
@@ -151,9 +192,25 @@ const installTask = async ({ id, targetPath, tarballMap, tarballUrl, bin, binSet
 
   await installBin({ bin, dirPath: targetPath, binSet, binPath });
   // console.log('install', nmPath);
-}
+};
 
-const cloneTask = async ({ id, sourcePath, targetPath, bin, binSet, tarballMap, binPath }: { id: string, sourcePath: string, targetPath: string, bin?: Record<string, string>, binSet: Set<string>, tarballMap: TarballMap, binPath: string }) => {
+const cloneTask = async ({
+  id,
+  sourcePath,
+  targetPath,
+  bin,
+  binSet,
+  tarballMap,
+  binPath,
+}: {
+  id: string;
+  sourcePath: string;
+  targetPath: string;
+  bin?: Record<string, string>;
+  binSet: Set<string>;
+  tarballMap: TarballMap;
+  binPath: string;
+}) => {
   const entries = tarballMap.get(id);
   if (!entries) {
     throw new Error(`No info of tarball entries for package ${id}`);
@@ -171,15 +228,29 @@ const cloneTask = async ({ id, sourcePath, targetPath, bin, binSet, tarballMap, 
   }
 
   await installBin({ bin, dirPath: targetPath, binSet, binPath });
-}
+};
 
-const linkTask = async ({ sourcePath, targetPath }: { sourcePath: string, targetPath: string }) => {
+const linkTask = async ({ sourcePath, targetPath }: { sourcePath: string; targetPath: string }) => {
   await cachedCreateDir(path.dirname(targetPath));
   await fs.symlink(path.relative(path.dirname(targetPath), sourcePath), targetPath);
   // console.log('link', dstPath, '->', srcPath);
 };
 
-const buildTask = async ({ id, targetPath, isWorkspace, optional, buildScripts, buildFailures }: { id: string, targetPath: string, isWorkspace: boolean, optional?: boolean, buildScripts: Map<string, string>, buildFailures: Map<string, string> }) => {
+const buildTask = async ({
+  id,
+  targetPath,
+  isWorkspace,
+  optional,
+  buildScripts,
+  buildFailures,
+}: {
+  id: string;
+  targetPath: string;
+  isWorkspace: boolean;
+  optional?: boolean;
+  buildScripts: Map<string, string>;
+  buildFailures: Map<string, string>;
+}) => {
   for (const [scriptName, script] of buildScripts) {
     const timeStart = Date.now();
     const { code, output } = await runCommand(targetPath, scriptName, script, [], true);
@@ -201,7 +272,7 @@ const buildTask = async ({ id, targetPath, isWorkspace, optional, buildScripts, 
       break;
     }
   }
-}
+};
 
 const getDirEntryType = (entry: Dirent): DirEntryType => {
   if (entry.isSymbolicLink()) {
@@ -213,18 +284,17 @@ const getDirEntryType = (entry: Dirent): DirEntryType => {
   }
 };
 
-const deleteDir = async ({ targetPath, cleanOnly }: { targetPath: string, cleanOnly: boolean }) => {
+const deleteDir = async ({ targetPath, cleanOnly }: { targetPath: string; cleanOnly: boolean }) => {
   if (!cleanOnly) {
     await fs.rm(targetPath, { force: true, recursive: true });
   } else {
     const entries = await fs.readdir(targetPath);
     for (const entry in entries) {
-      if (entry === NODE_MODULES)
-        continue;
+      if (entry === NODE_MODULES) continue;
       await fs.rm(path.join(targetPath, entry), { force: true, recursive: true });
     }
   }
-}
+};
 
 export const write = async (graph: Graph) => {
   let prevState;
@@ -251,8 +321,7 @@ export const write = async (graph: Graph) => {
       next = script.next(nextArg);
       nextArg = undefined;
 
-      if (next.done)
-        break;
+      if (next.done) break;
 
       const step = next.value;
       const { targetPath } = step;
@@ -265,18 +334,44 @@ export const write = async (graph: Graph) => {
           // empty
         }
 
-        nextArg = entries.map(entry => ({ name: entry.name, type: getDirEntryType(entry) }));
+        nextArg = entries.map((entry) => ({ name: entry.name, type: getDirEntryType(entry) }));
       } else if (step.type === InstallEventType.DELETE) {
         await deleteDir({ targetPath, cleanOnly: step.cleanOnly });
-      } if (step.type === InstallEventType.INSTALL) {
-        installTasks.set(targetPath, installTask({ id: step.id, targetPath, tarballUrl: step.tarballUrl, tarballMap, binSet, bin: step.bin, binPath: step.binPath, skipUnpack: step.skipUnpack }));
+      }
+      if (step.type === InstallEventType.INSTALL) {
+        installTasks.set(
+          targetPath,
+          installTask({
+            id: step.id,
+            targetPath,
+            tarballUrl: step.tarballUrl,
+            tarballMap,
+            binSet,
+            bin: step.bin,
+            binPath: step.binPath,
+            skipUnpack: step.skipUnpack,
+          }),
+        );
       } else if (step.type === InstallEventType.CLONE) {
         const { sourcePath } = step;
         const installPromise = installTasks.get(sourcePath);
         if (!installPromise) {
           throw new Error('Assertion: nothing to clone');
         }
-        installTasks.set(targetPath, installPromise.then(() => cloneTask({ id: step.id, sourcePath, targetPath, tarballMap, binSet, bin: step.bin, binPath: step.binPath })));
+        installTasks.set(
+          targetPath,
+          installPromise.then(() =>
+            cloneTask({
+              id: step.id,
+              sourcePath,
+              targetPath,
+              tarballMap,
+              binSet,
+              bin: step.bin,
+              binPath: step.binPath,
+            }),
+          ),
+        );
       } else if (step.type === InstallEventType.LINK) {
         installTasks.set(targetPath, linkTask({ sourcePath: step.sourcePath, targetPath }));
       } else if (step.type === InstallEventType.BUILD) {
@@ -290,7 +385,19 @@ export const write = async (graph: Graph) => {
           }
         }
 
-        buildTasks.set(targetPath, Promise.all(waitTasks).then(() => buildTask({ id: step.id, targetPath, optional: step.optional, isWorkspace: step.isWorkspace, buildScripts: step.buildScripts, buildFailures })));
+        buildTasks.set(
+          targetPath,
+          Promise.all(waitTasks).then(() =>
+            buildTask({
+              id: step.id,
+              targetPath,
+              optional: step.optional,
+              isWorkspace: step.isWorkspace,
+              buildScripts: step.buildScripts,
+              buildFailures,
+            }),
+          ),
+        );
       }
     } while (!next.done);
   } finally {
@@ -307,8 +414,7 @@ export const write = async (graph: Graph) => {
 
     const newStateText = JSON.stringify(installState, installStateSerializer, 0);
     if (newStateText !== prevStateText) {
-      if (prevStateText)
-        console.log('install state changed');
+      if (prevStateText) console.log('install state changed');
       if (prevStateText) {
         await fs.writeFile(INSTALL_STATE_PATH + '.old', JSON.stringify(JSON.parse(prevStateText), null, 2));
         await fs.writeFile(INSTALL_STATE_PATH + '.new', JSON.stringify(JSON.parse(newStateText), null, 2));
@@ -317,8 +423,8 @@ export const write = async (graph: Graph) => {
     }
   } else {
     console.log('deleted install state');
-    await fs.rm(INSTALL_STATE_PATH, { force: true })
+    await fs.rm(INSTALL_STATE_PATH, { force: true });
   }
 
   return buildFailures.size === 0 ? 0 : 1;
-}
+};

@@ -13,8 +13,7 @@ export const fromSimpleGraph = (graph: Graph) => {
   const seen = new Set<Graph>();
 
   const visitNode = (node: Graph) => {
-    if (seen.has(node))
-      return;
+    if (seen.has(node)) return;
     seen.add(node);
 
     if (node.dependencies) {
@@ -48,15 +47,13 @@ export const fromSimpleGraph = (graph: Graph) => {
 };
 
 export const toSimpleGraph = (graph: Graph) => {
-  if (!graph.workspace)
-    throw new Error(`Illegal argument, expected ${graph.id} to be a strict graph`);
+  if (!graph.workspace) throw new Error(`Illegal argument, expected ${graph.id} to be a strict graph`);
 
   const clonedNodes = new Map<Graph, Graph>();
 
   const cloneNode = (node: Graph): Graph => {
     let clone = clonedNodes.get(node);
-    if (clone)
-      return clone;
+    if (clone) return clone;
 
     clone = { ...node };
     clonedNodes.set(node, clone);
@@ -79,8 +76,7 @@ export const toSimpleGraph = (graph: Graph) => {
         }
       }
 
-      if (dependencies.length > 0)
-        clone.dependencies = dependencies;
+      if (dependencies.length > 0) clone.dependencies = dependencies;
     }
 
     if (node.workspaces) {

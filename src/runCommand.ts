@@ -3,7 +3,13 @@ import path from 'path';
 
 import { DOT_BIN, NODE_MODULES } from './constants';
 
-export const runCommand = async (cwd: string, scriptName: string, script: any, args: any[], buffer: boolean): Promise<{ output: string, code: number }> => {
+export const runCommand = async (
+  cwd: string,
+  scriptName: string,
+  script: any,
+  args: any[],
+  buffer: boolean,
+): Promise<{ output: string; code: number }> => {
   if (typeof script === 'undefined') {
     console.error(`Command ${scriptName} not found`);
     return { output: '', code: 1 };
@@ -57,9 +63,8 @@ export const runCommand = async (cwd: string, scriptName: string, script: any, a
 
   let promise, resolve;
 
-  promise = new Promise(r => resolve = r);
-  task.on('exit', code => resolve({ output, code }));
+  promise = new Promise((r) => (resolve = r));
+  task.on('exit', (code) => resolve({ output, code }));
 
   return await promise;
 };
-
