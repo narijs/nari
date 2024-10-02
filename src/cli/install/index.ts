@@ -3,11 +3,10 @@ import { ensureCacheDirExists } from '../../cache';
 import { resolve } from '../../resolver';
 import { write } from '../../installer';
 import { ResolveOptions } from '../../resolver/resolver';
-import { TOOL_NAME } from '../../constants';
-import metadata from '../../../package.json';
+import { TOOL_NAME, VERSION } from '../../constants';
 
 export const install = async (options?: ResolveOptions): Promise<number> => {
-  console.log(`${TOOL_NAME} install ${metadata.version}`);
+  console.log(`${TOOL_NAME} install ${VERSION}`);
   const resolveStart = Date.now();
   await ensureCacheDirExists();
   const graph = await resolve(options);

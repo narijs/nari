@@ -1,5 +1,7 @@
 import path from 'path';
+import metadata from '../package.json';
 
+export const VERSION = metadata.version;
 export const TOOL_NAME = 'nari';
 export const CACHE_VERSION = `v1`;
 export const NODE_MODULES = 'node_modules';
