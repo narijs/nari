@@ -12,13 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/.cache/nari
-            node_modules
-          key: ${{ runner.os }}-install-${{ hashFiles('package.json') }}
-
       - name: "Use Node.js 18.x"
         uses: actions/setup-node@master
         with:
