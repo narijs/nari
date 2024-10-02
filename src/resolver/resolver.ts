@@ -2,8 +2,14 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import detectIndent from 'detect-indent';
 
-import { readWorkspaceTree } from "./workspace"
-import { PackageMetadata, ResolveEventType, resolveScript, resolveStateDeserializer, resolveStateSerializer } from './resolveScript';
+import { readWorkspaceTree } from './workspace';
+import {
+  PackageMetadata,
+  ResolveEventType,
+  resolveScript,
+  resolveStateDeserializer,
+  resolveStateSerializer,
+} from './resolveScript';
 import { getCachedMetadata, downloadMetadata } from './registry';
 import { NODE_MODULES } from '../constants';
 import { cachedCreateDir } from '../cache';
@@ -11,13 +17,14 @@ import { cachedCreateDir } from '../cache';
 export type ResolveOptions = {
   metadata?: Map<string, any>;
   prod?: boolean;
+  skipBanner?: boolean;
 };
 
 export const RESOLVE_STATE_FILE = '.resolve-state.json';
 const RESOLVE_STATE_PATH = path.join(NODE_MODULES, RESOLVE_STATE_FILE);
 const RESOLVE_STATE_VERSION = '1';
 
-const getMetadata = async ({ name, lockTime }: { name: string, lockTime?: Date }) => {
+const getMetadata = async ({ name, lockTime }: { name: string; lockTime?: Date }) => {
   let fresh: boolean;
   const cachedMetadata = await getCachedMetadata(name);
   let metadata;
@@ -30,7 +37,7 @@ const getMetadata = async ({ name, lockTime }: { name: string, lockTime?: Date }
   }
 
   return { name, metadata, fresh };
-}
+};
 
 export const resolve = async (opts?: ResolveOptions) => {
   const options = opts || {};
@@ -49,7 +56,11 @@ export const resolve = async (opts?: ResolveOptions) => {
     // empty
   }
 
-  const script = resolveScript(pkg, { autoInstallPeers: true, resolutionOptimization: true, receivedMetadata: options.metadata, prod: options.prod }, prevState);
+  const script = resolveScript(
+    pkg,
+    { autoInstallPeers: true, resolutionOptimization: true, receivedMetadata: options.metadata, prod: options.prod },
+    prevState,
+  );
 
   const promises = new Map<string, Promise<PackageMetadata>>();
   try {
@@ -59,8 +70,7 @@ export const resolve = async (opts?: ResolveOptions) => {
       next = script.next(nextArg);
       nextArg = undefined;
 
-      if (next.done)
-        break;
+      if (next.done) break;
 
       const step = next.value;
       if (step.type === ResolveEventType.GET_METADATA) {
@@ -81,8 +91,7 @@ export const resolve = async (opts?: ResolveOptions) => {
 
       const newStateText = JSON.stringify(resolveState, resolveStateSerializer, 0);
       if (newStateText !== prevStateText) {
-        if (prevStateText)
-          console.log('resolve state changed');
+        if (prevStateText) console.log('resolve state changed');
         if (prevStateText) {
           await fs.writeFile(RESOLVE_STATE_PATH + '.old', JSON.stringify(JSON.parse(prevStateText), null, 2));
           await fs.writeFile(RESOLVE_STATE_PATH + '.new', JSON.stringify(JSON.parse(newStateText), null, 2));
@@ -97,11 +106,11 @@ export const resolve = async (opts?: ResolveOptions) => {
       }
     } else {
       console.log('deleted resolve state');
-      await fs.rm(RESOLVE_STATE_PATH, { force: true })
+      await fs.rm(RESOLVE_STATE_PATH, { force: true });
     }
 
     return next.value.graph;
   } finally {
     await Promise.all(promises.values());
   }
-}
+};

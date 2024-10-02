@@ -1,10 +1,14 @@
 import { promises as fs } from 'fs';
 import detectIndent from 'detect-indent';
 
+import { ensureCacheDirExists } from '../../cache';
 import { install } from '../install';
 import { removeScript, RemoveEventType } from './removeScript';
+import { TOOL_NAME, VERSION } from '../../constants';
 
 export const remove = async (nameList: string[]): Promise<number> => {
+  console.log(`${TOOL_NAME} remove ${VERSION}`);
+  await ensureCacheDirExists();
   let isModified = false;
 
   const packageJsonPath = 'package.json';
@@ -19,8 +23,7 @@ export const remove = async (nameList: string[]): Promise<number> => {
   do {
     next = script.next();
 
-    if (next.done)
-      break;
+    if (next.done) break;
 
     const step = next.value;
     if (step.type === RemoveEventType.MODIFY) {
@@ -37,8 +40,8 @@ export const remove = async (nameList: string[]): Promise<number> => {
   } while (!next.done);
 
   if (isModified) {
-    return await install();
+    return await install({ skipBanner: true });
   } else {
     return hasErrors ? 1 : 0;
   }
-}
+};
