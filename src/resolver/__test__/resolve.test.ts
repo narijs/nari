@@ -104,6 +104,64 @@ describe('resolve script', () => {
     });
   });
 
+  it('should save tarball location for later usage', () => {
+    const tree: PurePackage = {
+      json: {
+        dependencies: {
+          foo: '^1.0.0',
+        },
+      },
+      workspacePath: '.',
+    };
+
+    const time = new Date().toString();
+    const gen = resolveScript(tree);
+
+    expect(gen.next().value).toMatchObject({ type: ResolveEventType.GET_METADATA, name: 'foo' });
+    expect(gen.next().value).toEqual({ type: ResolveEventType.NEXT_METADATA });
+    expect(
+      gen.next({
+        name: 'foo',
+        metadata: {
+          versions: {
+            '1.0.1': {
+              dist: { tarball: 'https://foo.bar' },
+            },
+          },
+          time: { '1.0.1': time },
+        },
+      } as PackageMetadata),
+    ).toEqual({
+      value: {
+        graph: {
+          id: 'workspace:.@0.0.0',
+          workspacePath: '.',
+          dependencies: [{ id: 'foo@1.0.1', tarballUrl: 'https://foo.bar' }],
+        } as Graph,
+        state: {
+          resolutions: new Map([
+            [
+              'foo',
+              {
+                meta: {
+                  versions: {
+                    '1.0.1': {
+                      dist: { tarball: 'https://foo.bar' },
+                    },
+                  },
+                  time: { '1.0.1': time },
+                },
+                ranges: new Map([['^1.0.0', '1.0.1']]),
+              },
+            ],
+          ]),
+          lockTime: expect.any(Date),
+        },
+      },
+      done: true,
+    });
+  });
+
   it('should resolve transitive dependencies', () => {
     const tree: PurePackage = {
       json: {
