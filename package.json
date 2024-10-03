@@ -1,6 +1,6 @@
 {
   "name": "nari",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "bin": "./lib/nari",
   "scripts": {
     "build": "rm -rf ./lib && esbuild src/index.ts --sourcemap --bundle --platform=node --target=node18 --external:./cli --outfile=lib/nari '--banner:js=#!/usr/bin/env node' && chmod +x lib/nari && esbuild src/cli/index.ts --sourcemap --bundle --platform=node --target=node18 --outfile=lib/cli.js",
@@ -30,6 +30,10 @@
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
     "commander": "^12.1.0",
+    "detect-indent": "^6.0.0",
+    "micromatch": "^4.0.8",
+    "semver": "^7.6.3",
+    "tar-stream": "^3.1.7",
     "esbuild": "^0.24.0",
     "esbuild-jest": "^0.5.0",
     "eslint": "^9.11.1",
@@ -42,12 +46,6 @@
     "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
     "typescript": "~5.5.0"
-  },
-  "dependencies": {
-    "detect-indent": "^6.0.0",
-    "micromatch": "^4.0.8",
-    "semver": "^7.6.3",
-    "tar-stream": "^3.1.7"
   },
   "lint-staged": {
     "*.ts": [

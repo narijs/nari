@@ -18,6 +18,7 @@ export type ResolveOptions = {
   metadata?: Map<string, any>;
   prod?: boolean;
   skipBanner?: boolean;
+  verbose?: boolean;
 };
 
 export const RESOLVE_STATE_FILE = '.resolve-state.json';
@@ -58,7 +59,13 @@ export const resolve = async (opts?: ResolveOptions) => {
 
   const script = resolveScript(
     pkg,
-    { autoInstallPeers: true, resolutionOptimization: true, receivedMetadata: options.metadata, prod: options.prod },
+    {
+      autoInstallPeers: true,
+      resolutionOptimization: true,
+      receivedMetadata: options.metadata,
+      prod: options.prod,
+      verbose: options.verbose,
+    },
     prevState,
   );
 

@@ -37,6 +37,7 @@ export type ResolveOptions = {
   os?: string;
   libc?: string | null;
   receivedMetadata?: Map<string, any>;
+  verbose?: boolean;
 };
 
 export type ResolveEvent =
@@ -819,12 +820,18 @@ const getMetadataMapFromStateAndOptions = ({
   if (state) {
     for (const [name, { meta }] of state.resolutions) {
       receivedMetadata.set(name, { metadata: meta, fresh: false });
+      if (options.verbose) {
+        console.log(`state>${name}`, JSON.stringify(meta));
+      }
     }
   }
 
   if (options.receivedMetadata) {
     for (const [name, metadata] of options.receivedMetadata) {
       receivedMetadata.set(name, { metadata, fresh: true });
+      if (options.verbose) {
+        console.log(`opts>${name}`, JSON.stringify(metadata));
+      }
     }
   }
 
@@ -873,6 +880,9 @@ export const resolveScript = function* (
     }
 
     receivedMetadata.set(depName, packageMetadata);
+    if (options.verbose) {
+      console.log(`net>${packageMetadata.name}`, JSON.stringify(packageMetadata.metadata));
+    }
     const unresolvedRanges = unresolvedPackageRanges.get(depName);
     let resolvedRanges = resolvedPackageRanges.get(depName);
     if (!resolvedRanges) {
@@ -976,6 +986,17 @@ const minimizeJson = (json: any): any => {
       ].indexOf(key) >= 0
     ) {
       result[key] = json[key];
+    }
+  }
+
+  if (json.dist) {
+    for (const key of Object.keys(json.dist)) {
+      if (['tarball'].indexOf(key) >= 0) {
+        if (!result.dist) {
+          result.dist = {};
+        }
+        result.dist[key] = json.dist[key];
+      }
     }
   }
 
