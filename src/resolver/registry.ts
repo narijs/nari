@@ -118,7 +118,7 @@ export const downloadMetadata = async (name: string, cachedMetadata?: CachedMeta
       const date = response.headers['date'];
       const cachedFilePath = getMetadataCacheFilePath(name);
       if (cachedMetadata) {
-        console.log(`metadata for ${name} changed, old etag: ${cachedMetadata.cacheMeta.etag}, new etag: ${etag}`);
+        // console.log(`metadata for ${name} changed, old etag: ${cachedMetadata.cacheMeta.etag}, new etag: ${etag}`);
         await fs.rm(cachedFilePath, { force: true });
       }
 
