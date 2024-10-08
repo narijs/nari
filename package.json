@@ -3,7 +3,11 @@
   "version": "0.0.8",
   "bin": "./lib/nari",
   "scripts": {
-    "build": "rm -rf ./lib && esbuild src/index.ts --sourcemap --bundle --platform=node --target=node18 --external:./cli --outfile=lib/nari '--banner:js=#!/usr/bin/env node' && chmod +x lib/nari && esbuild src/cli/index.ts --sourcemap --bundle --platform=node --target=node18 --outfile=lib/cli.js",
+    "build": "rm -rf ./lib && nari build-native && esbuild src/index.ts --sourcemap --bundle --platform=node --target=node18 --external:./cli --outfile=lib/nari '--banner:js=#!/usr/bin/env node' && chmod +x lib/nari && esbuild src/cli/index.ts --external:*.node --sourcemap --bundle --platform=node --target=node18 --outfile=lib/cli.js",
+    "build-native": "nari build:linux -O ReleaseSmall && nari build:darwin -O ReleaseSmall && nari build:win32 -O ReleaseSmall",
+    "build:linux": "node exec.cjs zig build-lib -dynamic -lc -isystem node_modules/.cache/napi/include/node src/native/native.zig -femit-bin=lib/native-linux-x64.node -target x86_64-linux-gnu",
+    "build:darwin": "node exec.cjs zig build-lib -fallow-shlib-undefined -dynamic -lc -isystem node_modules/.cache/napi/include/node src/native/native.zig -femit-bin=lib/native-darwin-x64.node -target x86_64-macos",
+    "build:win32": "node exec.cjs zig build-lib -dynamic -lc -isystem node_modules/.cache/napi/include/node src/native/native.zig -femit-bin=lib/native-win32-x64.node node_modules/.cache/napi/node.lib -target x86_64-windows",
     "test": "jest",
     "nari": "nari build && node --enable-source-maps lib/nari",
     "test:watch": "jest --watch",

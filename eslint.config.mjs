@@ -25,6 +25,12 @@ export default [
     },
   },
   {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  {
     files: ['**/__test__/*.ts'],
     languageOptions: {
       globals: globals.jest,

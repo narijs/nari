@@ -21,6 +21,7 @@ import {
 } from './installScript';
 import { runCommand } from '../runCommand';
 import { NODE_MODULES } from '../constants';
+import native from '../native';
 
 const INSTALL_STATE_PATH = path.join(NODE_MODULES, '.install-state.json');
 const INSTALL_STATE_VERSION = '1';
@@ -186,7 +187,12 @@ const installTask = async ({
       buffer = await downloadTarball(name, version, tarballUrl);
     }
 
-    const entries = await unpackTarball(targetPath, buffer);
+    let entries;
+    if (native.unpackTarball) {
+      entries = native.unpackTarball(targetPath, buffer);
+    } else {
+      entries = await unpackTarball(targetPath, buffer);
+    }
     tarballMap.set(id, entries);
   }
 

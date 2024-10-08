@@ -7,6 +7,7 @@ dist
 .history
 .vscode
 .yarn
+.zig-cache
 *.log
 reports
 .idea/*
@@ -16,4 +17,3 @@ reports
 *.yaml
 .yarnrc.yml
 *.lockb
-native
