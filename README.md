@@ -2,7 +2,7 @@
 
 [![npm version](https://badge.fury.io/js/nari.svg)](https://badge.fury.io/js/nari)
 
-A lockfile-less JavaScript package manager.
+A lockfile-less JavaScript package manager with reproducible installs.
 
 Goals:
   - Developer productivity with existing JavaScript ecosystem and tooling
