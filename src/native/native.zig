@@ -4,19 +4,26 @@ const c = @cImport({
     @cInclude("node_api.h");
 });
 
-export fn napi_register_module_v1(env: c.napi_env, exports: c.napi_value) c.napi_value {
+fn register_function(env: c.napi_env, exports: c.napi_value, name: [*]const u8, func: c.napi_callback) !void {
     var function: c.napi_value = undefined;
-    if (c.napi_create_function(env, null, 0, unpackTarball, null, &function) != c.napi_ok) {
-        _ = c.napi_throw_error(env, null, "Failed to create function");
-        return null;
-    }
+    try check(c.napi_create_function(env, null, 0, func, null, &function));
+    try check(c.napi_set_named_property(env, exports, name, function));
+}
 
-    if (c.napi_set_named_property(env, exports, "unpackTarball", function) != c.napi_ok) {
-        _ = c.napi_throw_error(env, null, "Failed to add function to exports");
-        return null;
-    }
+fn register_module(env: c.napi_env, exports: c.napi_value) !c.napi_value {
+    try register_function(env, exports, "unpackTarball", unpackTarball);
+    try register_function(env, exports, "writeFile", writeFile);
 
     return exports;
+}
+
+export fn napi_register_module_v1(env: c.napi_env, exports: c.napi_value) c.napi_value {
+    return register_module(env, exports) catch |err| {
+        const msg = @as([*c]const u8, @ptrCast(@errorName(err)));
+        _ = c.napi_throw_error(env, null, msg);
+
+        return null;
+    };
 }
 
 const Error = error{NapiError};
@@ -99,7 +106,7 @@ fn unpack_tarball_impl(env: c.napi_env, info: c.napi_callback_info) !c.napi_valu
     try check(c.napi_get_cb_info(env, info, &argc, &argv, null, null));
 
     const dest_path = try get_string(env, argv[0], allocator);
-    defer allocator.free(dest_path[0 .. dest_path.len + 1]);
+    defer allocator.free(dest_path[0..dest_path.len]);
 
     var c_tar_buf_len: usize = undefined;
     var c_tar_buf: [*]u8 = undefined;
@@ -180,9 +187,40 @@ fn unpack_tarball_impl(env: c.napi_env, info: c.napi_callback_info) !c.napi_valu
 fn unpackTarball(env: c.napi_env, info: c.napi_callback_info) callconv(.C) c.napi_value {
     return unpack_tarball_impl(env, info) catch {
         @panic("panic");
-        // const msg = @as([*c]const u8, @ptrCast(@errorName(err)));
-        // _ = c.napi_throw_error(env, null, msg);
+    };
+}
 
-        // return null;
+fn write_file_impl(env: c.napi_env, info: c.napi_callback_info) !c.napi_value {
+    const allocator = std.heap.c_allocator;
+
+    const result: c.napi_value = undefined;
+
+    var argc: usize = 2;
+    var argv: [2]c.napi_value = undefined;
+
+    try check(c.napi_get_cb_info(env, info, &argc, &argv, null, null));
+
+    const dest_path = try get_string(env, argv[0], allocator);
+    defer allocator.free(dest_path[0..dest_path.len]);
+
+    var file_buf_len: usize = undefined;
+    var file_buf: [*]u8 = undefined;
+    try check(c.napi_get_buffer_info(env, argv[1], @ptrCast(&file_buf), &file_buf_len));
+
+    if (std.fs.cwd().createFile(dest_path, .{ .exclusive = true })) |fs_file| {
+        defer fs_file.close();
+        try fs_file.writeAll(file_buf[0..file_buf_len]);
+    } else |err| {
+        if (err != error.PathAlreadyExists) {
+            return err;
+        }
+    }
+
+    return result;
+}
+
+fn writeFile(env: c.napi_env, info: c.napi_callback_info) callconv(.C) c.napi_value {
+    return write_file_impl(env, info) catch {
+        @panic("panic");
     };
 }
