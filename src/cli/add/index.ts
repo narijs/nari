@@ -2,17 +2,11 @@ import { promises as fs } from 'fs';
 import detectIndent from 'detect-indent';
 
 import { ensureCacheDirExists } from '../../cache';
-import { downloadMetadata } from '../../resolver/registry';
+import { getMetadata } from '../../resolver/resolver';
 import { addScript, PackageMetadata, AddEventType, AddOptions } from './addScript';
 import { install } from '../install';
 export { AddOptions } from './addScript';
 import { TOOL_NAME, VERSION } from '../../constants';
-
-const getMetadata = async ({ name }: { name: string }) => {
-  const metadata = await downloadMetadata(name);
-
-  return { name, metadata };
-};
 
 export const add = async (specifierList: string[], options: AddOptions): Promise<number> => {
   console.log(`${TOOL_NAME} add ${VERSION}`);
@@ -39,11 +33,11 @@ export const add = async (specifierList: string[], options: AddOptions): Promise
 
       const step = next.value;
       if (step.type === AddEventType.GET_METADATA) {
-        const { name } = step;
-        promises.set(name, getMetadata({ name }));
+        const { name, lockTime } = step;
+        promises.set(name + ' ' + lockTime, getMetadata({ name, lockTime }));
       } else if (step.type === AddEventType.NEXT_METADATA) {
         const resolvedPromise = await Promise.race(promises.values());
-        promises.delete(resolvedPromise.name);
+        promises.delete(resolvedPromise.name + ' ' + resolvedPromise.lockTime);
         nextArg = resolvedPromise;
         metadata.set(resolvedPromise.name, resolvedPromise.metadata);
       } else if (step.type === AddEventType.MODIFY) {

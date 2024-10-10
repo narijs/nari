@@ -229,6 +229,35 @@ const isPackageJsonFieldCompatible = (actual: string | null, rules?: Array<strin
   return isBlocklist && isNotAllowlist;
 };
 
+export const resolveRangeFromMeta = (metadata: any, range: string, lockTime: Date): string => {
+  const versionsBeforeLock: string[] = [];
+  const versionsAfterLock: string[] = [];
+  const times = Object.entries(metadata.time)
+    .map(([version, timeStr]) => [version, new Date(timeStr as string)] as [string, Date])
+    .sort((e1, e2) => e1[1].getTime() - e2[1].getTime());
+  for (const [v, t] of times) {
+    if (metadata.versions[v]) {
+      if (t <= lockTime) {
+        versionsBeforeLock.push(v);
+      } else {
+        versionsAfterLock.push(v);
+      }
+    }
+  }
+
+  let version = semver.maxSatisfying(versionsBeforeLock, range, true);
+  if (!version) {
+    for (const v of versionsAfterLock) {
+      if (semver.satisfies(v, range, true)) {
+        version = v;
+        break;
+      }
+    }
+  }
+
+  return version;
+};
+
 const resolveRange = function* ({
   name,
   range,
@@ -283,34 +312,10 @@ const resolveRange = function* ({
   const metadataEntry = receivedMetadata.get(name);
   if (!resolvedRangeInfo && metadataEntry) {
     const metadata = metadataEntry.metadata;
-    const availableVersions = Object.keys(metadata.versions);
-    const versionsBeforeLock: string[] = [];
-    const versionsAfterLock: string[] = [];
-    const times = Object.entries(metadata.time)
-      .map(([version, timeStr]) => [version, new Date(timeStr as string)] as [string, Date])
-      .sort((e1, e2) => e1[1].getTime() - e2[1].getTime());
-    for (const [v, t] of times) {
-      if (metadata.versions[v]) {
-        if (t <= lockTime) {
-          versionsBeforeLock.push(v);
-        } else {
-          versionsAfterLock.push(v);
-        }
-      }
-    }
-
-    let version = semver.maxSatisfying(versionsBeforeLock, range, true);
-    if (!version) {
-      for (const v of versionsAfterLock) {
-        if (semver.satisfies(v, range, true)) {
-          version = v;
-          break;
-        }
-      }
-    }
-
+    const version = resolveRangeFromMeta(metadata, range, lockTime);
     if (!version) {
       if (metadataEntry.fresh) {
+        const availableVersions = Object.keys(metadata.versions);
         throw new Error(
           `Unable to resolve ${name}@${range}, ${metadata.name}, available versions: ${availableVersions}`,
         );
