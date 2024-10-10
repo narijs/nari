@@ -25,7 +25,7 @@ export const RESOLVE_STATE_FILE = '.resolve-state.json';
 const RESOLVE_STATE_PATH = path.join(NODE_MODULES, RESOLVE_STATE_FILE);
 const RESOLVE_STATE_VERSION = '1';
 
-const getMetadata = async ({ name, lockTime }: { name: string; lockTime?: Date }) => {
+export const getMetadata = async ({ name, lockTime }: { name: string; lockTime: Date }) => {
   let fresh: boolean;
   const cachedMetadata = await getCachedMetadata(name);
   let metadata;
@@ -37,7 +37,7 @@ const getMetadata = async ({ name, lockTime }: { name: string; lockTime?: Date }
     metadata = await downloadMetadata(name, cachedMetadata);
   }
 
-  return { name, metadata, fresh };
+  return { name, metadata, fresh, lockTime };
 };
 
 export const resolve = async (opts?: ResolveOptions) => {
