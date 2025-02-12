@@ -2,7 +2,7 @@ import dns, { LookupAddress } from 'dns';
 import http from 'http';
 import https from 'https';
 import { OutgoingHttpHeaders } from 'http2';
-import { TOOL_NAME, VERSION } from '../constants';
+// import { TOOL_NAME, VERSION } from '../constants';
 
 let ipv6 = true;
 
@@ -43,7 +43,7 @@ const RETRY_TIMEOUT = 1000;
 export const get = async (url: string, opts?: GetOptions): Promise<http.IncomingMessage> => {
   const headers = opts?.headers || {};
 
-  headers['User-Agent'] = `${TOOL_NAME}/${VERSION} npm/? node/${process.version} ${process.platform} ${process.arch}`;
+  headers['User-Agent'] = `yarn/1.22.19 npm/? node/${process.version} ${process.platform} ${process.arch}`;
 
   let retries = 0;
   let lastError;
